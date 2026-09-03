@@ -1,0 +1,24 @@
+.status-badge {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  padding: 3px 9px;
+  display: inline-block;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.status-badge--ok {
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+
+.status-badge--bad {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+
+.status-badge--wait {
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+}
