@@ -1,13 +1,16 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import Login from "../pages/Login/Login";
-import Professor from "../pages/Professor/Professor";
-import Campeonato from "../pages/Campeonato/Campeonato";
-import CoordenadorLayout from "../layouts/CoordenadorLayout/CoordenadorLayout";
-import NovoAluno from "../pages/coordenador/NovoAluno/NovoAluno";
-import Alunos from "../pages/coordenador/Alunos/Alunos";
-import Contratos from "../pages/coordenador/Contratos/Contratos";
-import Financeiro from "../pages/coordenador/Financeiro/Financeiro";
+import { useAuth } from "@features/auth/hooks/useAuth";
+import Login from "@features/auth/pages/Login";
+import PainelProfessor from "@features/painel-professor/pages/PainelProfessor";
+import Campeonato from "@features/campeonato/pages/Campeonato";
+import CoordenadorLayout from "@shared/layouts/CoordenadorLayout/CoordenadorLayout";
+import NovoAluno from "@features/aluno/pages/NovoAluno";
+import Alunos from "@features/aluno/pages/Alunos";
+import Contratos from "@features/contrato/pages/Contratos";
+import Financeiro from "@features/financeiro/pages/Financeiro";
+import Categorias from "@features/categoria/pages/Categorias";
+import Professores from "@features/professor/pages/Professores";
+import Turmas from "@features/turma/pages/Turmas";
 
 // Caminho padrão de cada perfil ao logar (ou ao ser barrado de uma área que não é dele).
 function rotaDoPerfil(perfil) {
@@ -49,7 +52,7 @@ export default function AppRoutes() {
         path="/professor"
         element={
           <RotaProtegida perfisPermitidos={["Coordenador", "Professor"]}>
-            <Professor />
+            <PainelProfessor />
           </RotaProtegida>
         }
       />
@@ -76,6 +79,9 @@ export default function AppRoutes() {
         <Route path="alunos" element={<Alunos />} />
         <Route path="contratos" element={<Contratos />} />
         <Route path="financeiro" element={<Financeiro />} />
+        <Route path="categorias" element={<Categorias />} />
+        <Route path="professores" element={<Professores />} />
+        <Route path="turmas" element={<Turmas />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
