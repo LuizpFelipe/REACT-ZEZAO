@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logoOriginal from "@shared/assets/logo-original.jpg";
 import logoOriginalDark from "@shared/assets/logo-original-dark.jpg";
 import logoCompleta from "@shared/assets/logo-completa.png";
@@ -100,9 +100,9 @@ export default function Login() {
             />
             Manter conectado
           </label>
-          <a className="link-muted" href="#">
+          <Link className="link-muted" to="/recuperar-senha">
             Esqueci a senha
-          </a>
+          </Link>
         </div>
 
         <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={carregando}>

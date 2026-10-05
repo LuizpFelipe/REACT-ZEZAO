@@ -1,29 +1,20 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import logoBrasao from "@shared/assets/logo-brasao.png";
 import logoBrasaoDark from "@shared/assets/logo-brasao-dark.png";
 import ThemeToggle from "@shared/components/ThemeToggle/ThemeToggle";
 import { useAuth } from "@features/auth/hooks/useAuth";
 import { useTheme } from "@shared/hooks/useTheme";
-import "./CoordenadorLayout.css";
+// Reaproveita o mesmo CSS do layout da Coordenação — as classes (coord-*)
+// já são genéricas o suficiente pra servir de topbar padrão do sistema.
+import "@shared/layouts/CoordenadorLayout/CoordenadorLayout.css";
 
-const SUBNAV_ITEMS = [
-  { to: "dashboard", label: "Dashboard" },
-  { to: "novo-aluno", label: "Novo Aluno" },
-  { to: "alunos", label: "Alunos" },
-  { to: "contratos", label: "Contratos" },
-  { to: "financeiro", label: "Financeiro" },
-  { to: "inadimplentes", label: "Inadimplentes" },
-  { to: "categorias", label: "Categorias" },
-  { to: "professores", label: "Professores" },
-  { to: "turmas", label: "Turmas" },
-];
-
-export default function CoordenadorLayout() {
-  const { logout } = useAuth();
+export default function ProfessorLayout() {
+  const { usuario, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
 
   const brasao = theme === "dark" ? logoBrasaoDark : logoBrasao;
+  const podeVerCoordenacao = usuario?.perfil === "Coordenador";
 
   function handleSair() {
     logout();
@@ -44,12 +35,18 @@ export default function CoordenadorLayout() {
         </div>
 
         <div className="coord-top-tabs">
+          {podeVerCoordenacao ? (
+            <Link to="/coordenacao" className="top-tab">
+              Coordenação
+            </Link>
+          ) : (
+            <button className="top-tab" disabled>
+              Coordenação
+            </button>
+          )}
           <button className="top-tab top-tab--active" disabled>
-            Coordenação
-          </button>
-          <Link to="/professor" className="top-tab">
             Professor
-          </Link>
+          </button>
           <Link to="/campeonato" className="top-tab">
             Campeonato
           </Link>
@@ -64,25 +61,7 @@ export default function CoordenadorLayout() {
       </header>
 
       <div className="coord-body">
-        <div className="coord-title-block">
-          <div className="coord-eyebrow">Painel administrativo</div>
-          <h1 className="coord-title">Coordenação</h1>
-          <nav className="coord-subnav">
-            {SUBNAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => "coord-subnav-item" + (isActive ? " coord-subnav-item--active" : "")}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        <div className="coord-content">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   );

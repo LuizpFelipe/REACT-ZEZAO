@@ -32,3 +32,27 @@ export async function login(nomeUsuario, senha) {
 
   return criarUsuarioFromApi(corpo.data);
 }
+
+/**
+ * Dispara a recuperação de senha por e-mail — pedido explícito do professor
+ * na entrevista com o cliente. O login continua sendo por usuário/senha (não
+ * por e-mail), mas o Usuario agora precisa ter um e-mail cadastrado (ver
+ * Professores.jsx) só pra receber o link de redefinição.
+ *
+ * ATENÇÃO: endpoint ainda não existe no back-end — faz parte do card
+ * [Back-end] Recuperação de Senha, ainda não implementado. O back precisa
+ * achar o Usuario pelo e-mail cadastrado e enviar um link/token de
+ * redefinição pra essa caixa de entrada.
+ * Endpoint (a criar): POST /api/auth/recuperar-senha
+ */
+export async function solicitarRecuperacaoSenha({ email }) {
+  const response = await fetchApi(`${API_URL}/auth/recuperar-senha`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!response.ok) {
+    throw new Error("Não foi possível registrar o pedido de recuperação.");
+  }
+  return response.json().catch(() => ({}));
+}

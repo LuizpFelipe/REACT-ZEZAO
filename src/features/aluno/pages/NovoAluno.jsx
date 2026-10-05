@@ -146,7 +146,7 @@ export default function NovoAluno() {
             <div className="photo-text">
               <div className="t1">Foto do aluno</div>
               <div className="t2">
-                {form.foto ? form.foto.name : "JPG ou PNG — salva em pasta própria, o back-end guarda só o caminho"}
+                {form.foto ? form.foto.name : "JPG ou PNG"}
               </div>
             </div>
             <label className="btn btn-outline btn-sm photo-upload-btn">
