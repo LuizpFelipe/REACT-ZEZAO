@@ -343,3 +343,224 @@ table.data-table {
   height: 100%;
   object-fit: cover;
 }
+
+/* ---------- Painel do Professor: grid de turmas ---------- */
+.turma-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.turma-card {
+  border: 1px solid var(--border);
+  background: var(--panel-alt);
+  padding: 15px;
+  position: relative;
+}
+
+.turma-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.turma-card-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.turma-card-meta {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-bottom: 12px;
+}
+
+.turma-card-meta b {
+  color: var(--ink);
+}
+
+.turma-card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.turma-card-count {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+.turma-card-count b {
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+
+.turma-alert {
+  font-size: 10px;
+  color: var(--red-ink);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+/* ---------- Voltar (back-link) ---------- */
+.back-link {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+/* ---------- Pill genérico (status livre, fora do StatusBadge) ---------- */
+.pill {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  padding: 3px 9px;
+  display: inline-block;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.pill--ok {
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+
+.pill--bad {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+
+.pill--warn {
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+}
+
+.pill--neutro {
+  background: var(--panel-alt);
+  color: var(--ink-faint);
+  border: 1px solid var(--border-strong);
+}
+
+/* ---------- Campeonato: listagem ---------- */
+.camp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  padding: 13px 15px;
+  margin-bottom: 10px;
+  background: var(--panel-alt);
+  flex-wrap: wrap;
+}
+
+.camp-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+.camp-meta {
+  font-size: 10.5px;
+  color: var(--ink-dim);
+  margin-top: 3px;
+}
+
+.camp-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ---------- Campeonato: abas ---------- */
+.tab-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 18px;
+}
+
+.tab-item {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 8px 15px;
+  color: var(--ink-dim);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.tab-item--active {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------- Campeonato: ranqueamento ---------- */
+.rank-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--panel-alt);
+  color: var(--ink-faint);
+  border: 1px solid var(--border-strong);
+}
+
+.rank-badge.rank-1 {
+  background: var(--accent);
+  color: var(--btn-primary-ink);
+  border-color: var(--accent);
+}
+
+.rank-badge.rank-2,
+.rank-badge.rank-3 {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+.aproveitamento-bar {
+  width: 60px;
+  height: 6px;
+  background: var(--border);
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.aproveitamento-bar span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+}

@@ -1,76 +1,140 @@
-import { useState } from "react";
-import Select from "@shared/components/Select/Select";
-import Input from "@shared/components/Input/Input";
+import { useEffect, useState } from "react";
+import StatusBadge from "@shared/components/StatusBadge/StatusBadge";
 import Button from "@shared/components/Button/Button";
-import { gerarContratoPdf } from "../services/contratoService";
+import Loading from "@shared/components/Loading/Loading";
+import { listarAlunos } from "@features/aluno/services/alunoService";
+import { baixarContratoPdf, cancelarContrato, listarContratos } from "../services/contratoService";
 import "@shared/shared.css";
 
-// Lista de alunos para o seletor — troca pela chamada real (alunoService.listar())
-// quando o back-end estiver disponível.
-const ALUNOS = [
-  { value: "1", label: "Enzo Ferreira" },
-  { value: "2", label: "Helena Souza" },
-  { value: "3", label: "Davi Lucca" },
-];
-
+/**
+ * Esta tela não emite contratos — o Contrato é criado automaticamente pelo
+ * back-end junto com as 12 parcelas assim que o aluno é cadastrado (card
+ * [Back-end] Contrato). Aqui só lista o que já existe, baixa o PDF pra
+ * impressão/assinatura e permite cancelar (o que só muda o Status, nunca
+ * apaga a linha, pra não perder o histórico de parcelas vinculadas).
+ */
 export default function Contratos() {
-  const [alunoId, setAlunoId] = useState(ALUNOS[0].value);
-  const [dataInicio, setDataInicio] = useState("");
-  const [valorParcela, setValorParcela] = useState("");
-  const [gerando, setGerando] = useState(false);
+  const [contratos, setContratos] = useState([]);
+  const [alunos, setAlunos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [processandoId, setProcessandoId] = useState(null);
 
-  const alunoSelecionado = ALUNOS.find((a) => a.value === alunoId);
+  useEffect(() => {
+    carregar();
+  }, []);
 
-  async function handleGerarPdf() {
-    setGerando(true);
+  async function carregar() {
+    setCarregando(true);
     try {
-      await gerarContratoPdf({ alunoId, dataInicio, valorParcela });
-    } catch (err) {
-      alert(err.message || "Não foi possível gerar o contrato.");
+      const [contratosApi, alunosApi] = await Promise.all([listarContratos(), listarAlunos()]);
+      setContratos(contratosApi);
+      setAlunos(alunosApi);
+    } catch {
+      setContratos([]);
+      try {
+        setAlunos(await listarAlunos());
+      } catch {
+        setAlunos([]);
+      }
     } finally {
-      setGerando(false);
+      setCarregando(false);
     }
   }
 
-  return (
-    <div className="grid-2">
-      <div className="card ticket-card">
-        <div className="ticket-header">
-          <div className="avatar" style={{ width: 40, height: 40 }}>
-            {alunoSelecionado ? alunoSelecionado.label[0] : "-"}
-          </div>
-          <div>
-            <div className="ticket-title">Contrato de Matrícula</div>
-            <div className="ticket-sub">{alunoSelecionado?.label ?? "Selecione um aluno"}</div>
-          </div>
-        </div>
-        <div className="clause">Vigência anual, renovada no início do ano letivo.</div>
-        <div className="clause">Pagamento em 12 parcelas mensais.</div>
-        <div className="clause">2 aulas semanais, reposição livre na mesma categoria.</div>
-        <Button onClick={handleGerarPdf} disabled={gerando}>
-          {gerando ? "Gerando..." : "Gerar Contrato em PDF"}
-        </Button>
-      </div>
+  function nomeDoAluno(alunoId) {
+    return alunos.find((a) => a.id === alunoId)?.nome ?? "—";
+  }
 
-      <div className="card">
-        <h3>
-          <span className="dot" /> Emitir Novo Contrato
-        </h3>
-        <div className="form-row full">
-          <Select id="aluno" label="Selecionar aluno" options={ALUNOS} value={alunoId} onChange={(e) => setAlunoId(e.target.value)} />
+  async function handleBaixarPdf(contratoId) {
+    setProcessandoId(contratoId);
+    try {
+      const blob = await baixarContratoPdf(contratoId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `contrato-${contratoId}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message || "Não foi possível gerar o PDF do contrato.");
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function handleCancelar(contratoId) {
+    if (!confirm("Cancelar este contrato? As parcelas já geradas continuam no histórico.")) return;
+    setProcessandoId(contratoId);
+    try {
+      await cancelarContrato(contratoId);
+      await carregar();
+    } catch (err) {
+      alert(err.message || "Não foi possível cancelar o contrato.");
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  if (carregando) {
+    return <Loading label="Carregando contratos..." />;
+  }
+
+  return (
+    <div className="card">
+      <h3><span className="dot" /> Contratos</h3>
+      {contratos.length === 0 ? (
+        <p className="helper-text">Nenhum contrato encontrado.</p>
+      ) : (
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Valor da parcela</th>
+                <th>Parcelas</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contratos.map((c) => (
+                <tr key={c.id}>
+                  <td>{nomeDoAluno(c.alunoId)}</td>
+                  <td className="mono">{c.dataInicio}</td>
+                  <td className="mono">{c.dataFim}</td>
+                  <td className="mono">{c.valorParcela}</td>
+                  <td className="mono">{c.numParcelas}</td>
+                  <td><StatusBadge status={c.status} /></td>
+                  <td>
+                    <div style={{ display: "flex", gap: "0.4rem" }}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBaixarPdf(c.id)}
+                        disabled={processandoId === c.id}
+                      >
+                        Baixar PDF
+                      </Button>
+                      {c.status !== "Cancelado" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelar(c.id)}
+                          disabled={processandoId === c.id}
+                        >
+                          Cancelar
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div className="form-row">
-          <Input id="dataInicio" label="Data de início" type="text" placeholder="dd/mm/aaaa" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-          <Input
-            id="valorParcela"
-            label="Valor da parcela"
-            placeholder="R$ 180,00"
-            value={valorParcela}
-            onChange={(e) => setValorParcela(e.target.value)}
-          />
-        </div>
-        <Button variant="outline">Pré-visualizar</Button>
-      </div>
+      )}
     </div>
   );
 }

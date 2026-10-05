@@ -7,6 +7,10 @@
  * @property {string} nomeUsuario
  * @property {"Coordenador" | "Professor"} perfil
  * @property {string} token - token de autenticação retornado pela API
+ * @property {string} usuarioId - id do Usuario logado (Guid do back-end).
+ *   Usado pelo Painel do Professor pra descobrir "qual professor é esse"
+ *   (Professor.UsuarioId == usuario.usuarioId), via
+ *   features/painel-professor/services/turmaProfessorService.js.
  */
 
 /**
@@ -22,5 +26,6 @@ export function criarUsuarioFromApi(apiResponse) {
     nomeUsuario: apiResponse.nomeUsuario,
     perfil: apiResponse.perfil,
     token: apiResponse.token,
+    usuarioId: apiResponse.usuarioId,
   };
 }

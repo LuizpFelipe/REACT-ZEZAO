@@ -23,12 +23,16 @@ export async function listarProfessores() {
  * Cria um professor — isso também cria o Usuario de login dele junto,
  * no back-end (ver Application/Services/ProfessorService.cs).
  * Endpoint: POST /api/Professores
+ *
+ * O e-mail é obrigatório porque é pra onde vai o link de recuperação de
+ * senha (card [Back-end] Recuperação de Senha, que precisa do Usuario ter
+ * um e-mail cadastrado pra isso funcionar).
  */
-export async function criarProfessor({ nome, telefone, nomeUsuario, senha }) {
+export async function criarProfessor({ nome, telefone, email, nomeUsuario, senha }) {
   const response = await fetchApi(`${API_URL}/Professores`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome, telefone, nomeUsuario, senha }),
+    body: JSON.stringify({ nome, telefone, email, nomeUsuario, senha }),
   });
   const corpo = await response.json().catch(() => null);
   if (!response.ok || !corpo?.status) {
@@ -38,15 +42,15 @@ export async function criarProfessor({ nome, telefone, nomeUsuario, senha }) {
 }
 
 /**
- * Atualiza nome/telefone de um professor (não altera usuário/senha —
+ * Atualiza nome/telefone/e-mail de um professor (não altera usuário/senha —
  * isso é um fluxo separado, de reset de senha pelo Coordenador).
  * Endpoint: PUT /api/Professores/{id}
  */
-export async function atualizarProfessor(id, { nome, telefone }) {
+export async function atualizarProfessor(id, { nome, telefone, email }) {
   const response = await fetchApi(`${API_URL}/Professores/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome, telefone }),
+    body: JSON.stringify({ nome, telefone, email }),
   });
   const corpo = await response.json().catch(() => null);
   if (!response.ok || !corpo?.status) {
