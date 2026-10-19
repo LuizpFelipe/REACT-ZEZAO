@@ -10,10 +10,6 @@ function normalizar(token) {
     .slice(0, 3);
 }
 
-/**
- * Converte um texto tipo "Seg/Qua", "Ter/Qui" ou "Sex" numa lista de
- * números de dia da semana (0 = domingo ... 6 = sábado).
- */
 export function parseDiasSemana(diasSemanaStr) {
   if (!diasSemanaStr) return [];
   return diasSemanaStr
@@ -23,24 +19,12 @@ export function parseDiasSemana(diasSemanaStr) {
     .filter((d) => d !== undefined);
 }
 
-/**
- * Extrai hora:minuto de um texto tipo "18h" ou "17h30".
- */
 export function parseHorario(horarioStr) {
   const match = /(\d{1,2})h(\d{2})?/.exec(horarioStr ?? "");
   if (!match) return { hora: 0, minuto: 0 };
   return { hora: Number(match[1]), minuto: Number(match[2] ?? 0) };
 }
 
-/**
- * Gera todas as datas (já com a hora da aula) de um mês em que a turma tem
- * aula, a partir dos dias da semana e do horário cadastrados nela.
- *
- * @param {{ diasSemana: string, horario: string }} turma
- * @param {number} ano
- * @param {number} mes - 0-indexado (0 = janeiro, 11 = dezembro)
- * @returns {Date[]}
- */
 export function gerarOcorrenciasDoMes(turma, ano, mes) {
   const diasSemana = parseDiasSemana(turma.diasSemana);
   const { hora, minuto } = parseHorario(turma.horario);
@@ -56,7 +40,6 @@ export function gerarOcorrenciasDoMes(turma, ano, mes) {
   return ocorrencias;
 }
 
-/** Compara só a parte de data (ignora hora), útil pra "até hoje" / "a partir de hoje". */
 export function mesmoDiaOuAntes(data, referencia) {
   const d = new Date(data.getFullYear(), data.getMonth(), data.getDate());
   const r = new Date(referencia.getFullYear(), referencia.getMonth(), referencia.getDate());
@@ -69,7 +52,6 @@ export function mesmoDiaOuDepois(data, referencia) {
   return d >= r;
 }
 
-/** yyyy-mm-dd, para enviar pro back-end. */
 export function paraIsoData(data) {
   const ano = data.getFullYear();
   const mes = String(data.getMonth() + 1).padStart(2, "0");

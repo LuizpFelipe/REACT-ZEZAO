@@ -11,21 +11,6 @@ import { listarResumoFinanceiro } from "@features/financeiro/services/financeiro
 import { estadoCampeonato } from "@features/campeonato/models/Campeonato";
 import "@shared/shared.css";
 
-/**
- * Painel da Coordenação — resumo geral do sistema.
- *
- * Não existe (nem precisa existir) nenhum endpoint novo de back-end pra essa
- * tela: todo número aqui é derivado dos endpoints que os outros cards já
- * definem (Alunos, Turmas, Professores, Categorias, Contratos, Campeonatos,
- * Financeiro/resumo). Por isso não tem card de back-end associado — é
- * trabalho só de front, combinando o que já existe.
- *
- * Alguns desses endpoints ainda não estão implementados (Contratos,
- * Campeonatos, Financeiro/resumo) — o card de cada um já tem o aviso de
- * "backend ainda não pronto"; aqui cada bloco falha isoladamente (um
- * Promise.allSettled), então a tela mostra o que já tiver e some só o
- * bloco que depende de endpoint pendente.
- */
 export default function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [dados, setDados] = useState({
@@ -83,7 +68,6 @@ export default function Dashboard() {
     ? campeonatos.filter((c) => estadoCampeonato(c.data) === "Agendado").length
     : null;
 
-  // Alunos por turma — pra achar rapidinho qual turma está mais cheia/vazia.
   const alunosPorTurma = {};
   if (alunos && turmas) {
     for (const turma of turmas) {

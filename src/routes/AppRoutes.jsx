@@ -19,24 +19,15 @@ import Categorias from "@features/categoria/pages/Categorias";
 import Professores from "@features/professor/pages/Professores";
 import Turmas from "@features/turma/pages/Turmas";
 
-// Caminho padrão de cada perfil ao logar (ou ao ser barrado de uma área que não é dele).
 function rotaDoPerfil(perfil) {
   return perfil === "Professor" ? "/professor" : "/coordenacao";
 }
 
-/**
- * Protege uma rota exigindo login — e, se perfisPermitidos for informado,
- * exige também que o usuário logado seja um dos perfis daquela lista.
- *
- * Modelo de acesso do projeto:
- * - Coordenador: acessa tudo (Coordenação, Professor, Campeonato)
- * - Professor: acessa a própria área e o Campeonato, mas não a Coordenação
- */
 function RotaProtegida({ perfisPermitidos, children }) {
   const { usuario, isAuthenticated, carregandoSessao } = useAuth();
 
   if (carregandoSessao) {
-    return null; // evita "piscar" a tela de login antes de checar a sessão salva
+    return null;
   }
 
   if (!isAuthenticated) {

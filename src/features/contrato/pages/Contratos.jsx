@@ -6,13 +6,6 @@ import { listarAlunos } from "@features/aluno/services/alunoService";
 import { baixarContratoPdf, cancelarContrato, listarContratos } from "../services/contratoService";
 import "@shared/shared.css";
 
-/**
- * Esta tela não emite contratos — o Contrato é criado automaticamente pelo
- * back-end junto com as 12 parcelas assim que o aluno é cadastrado (card
- * [Back-end] Contrato). Aqui só lista o que já existe, baixa o PDF pra
- * impressão/assinatura e permite cancelar (o que só muda o Status, nunca
- * apaga a linha, pra não perder o histórico de parcelas vinculadas).
- */
 export default function Contratos() {
   const [contratos, setContratos] = useState([]);
   const [alunos, setAlunos] = useState([]);

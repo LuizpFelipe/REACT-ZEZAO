@@ -6,14 +6,6 @@ import { listarAlunos } from "@features/aluno/services/alunoService";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import "@shared/shared.css";
 
-/**
- * Este relatório não tem (nem precisa de) endpoint próprio no back: o card
- * [Back-end] Financeiro já prevê `GET /api/Parcelas?status=Atrasado`, então
- * a lista de inadimplentes é montada aqui agregando essas parcelas por
- * aluno, usando os dados de `listarAlunos()`/`listarTurmas()` que já
- * existem pra pegar turma/responsável/telefone.
- */
-
 function diasDesde(dataIso) {
   if (!dataIso) return 0;
   const diffMs = Date.now() - new Date(dataIso).getTime();
@@ -91,8 +83,6 @@ export default function Inadimplentes() {
   async function handleDisparar(inadimplente) {
     setDisparandoId(inadimplente.alunoId);
     try {
-      // Não existe disparo por aluno no back — dispara uma a uma pra cada
-      // parcela em atraso daquele aluno.
       for (const parcelaId of inadimplente.parcelaIds) {
         await dispararCobranca(parcelaId);
       }

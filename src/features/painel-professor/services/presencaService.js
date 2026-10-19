@@ -3,23 +3,6 @@ import { montarRegistrarChamadaPayload, criarListaChamadaFromApi } from "../mode
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5260/api";
 
-/**
- * ATENÇÃO: estes endpoints ainda não existem no back-end — fazem parte do
- * card [Back-end] Presença (Chamada), que ainda não foi implementado. As
- * chamadas abaixo estão prontas pra funcionar assim que o back subir;
- * até lá, vão falhar com 404 (o try/catch das telas já trata isso
- * mostrando um aviso).
- */
-
-/**
- * Registra a chamada de uma turma numa data.
- * Endpoint (a criar): POST /api/Turmas/{turmaId}/chamada
- * [Authorize(Roles = "Professor")]
- *
- * @param {string} turmaId
- * @param {string} dataIso - aaaa-mm-dd
- * @param {Array<{ alunoId: string, presente: boolean }>} presencas
- */
 export async function registrarChamada(turmaId, dataIso, presencas) {
   const response = await fetchApi(`${API_URL}/Turmas/${turmaId}/chamada`, {
     method: "POST",
@@ -33,17 +16,6 @@ export async function registrarChamada(turmaId, dataIso, presencas) {
   return corpo;
 }
 
-/**
- * Busca a chamada de uma turma numa data: lista de alunos da turma já com
- * `presente` (chamada já registrada, ou tudo desmarcado se ainda não
- * houver) e `ehInadimplente` — sem expor nenhum valor financeiro, só o
- * booleano calculado no back-end.
- * Endpoint (a criar): GET /api/Turmas/{turmaId}/chamada?data=aaaa-mm-dd
- * [Authorize(Roles = "Professor,Coordenador")]
- *
- * @param {string} turmaId
- * @param {string} dataIso
- */
 export async function obterChamadaPorTurmaEData(turmaId, dataIso) {
   const response = await fetchApi(`${API_URL}/Turmas/${turmaId}/chamada?data=${dataIso}`);
   if (!response.ok) {

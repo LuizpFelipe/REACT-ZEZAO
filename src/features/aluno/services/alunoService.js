@@ -3,11 +3,6 @@ import { criarAlunoFromApi } from "../models/Aluno";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5260/api";
 
-/**
- * Lista os alunos matriculados.
- * Endpoint: GET /api/Alunos
- * Formato de resposta: { status, message, data: [ ...alunos ] }
- */
 export async function listarAlunos() {
   const response = await fetchApi(`${API_URL}/Alunos`);
   if (!response.ok) {
@@ -18,14 +13,6 @@ export async function listarAlunos() {
   return lista.map(criarAlunoFromApi);
 }
 
-/**
- * Cria um novo aluno. Envia como multipart/form-data por causa da foto.
- * Endpoint: POST /api/Alunos (recebe [FromForm] CriarAlunoRequestDTO + IFormFile? foto)
- *
- * @param {{ nomeCompleto: string, dataNascimentoIso: string, nivelTecnico: string,
- *   responsavelNome: string, telefone: string, endereco: string, turmaId: string,
- *   foto: File|null }} dados
- */
 export async function criarAluno(dados) {
   const formData = new FormData();
   formData.append("NomeCompleto", dados.nomeCompleto);

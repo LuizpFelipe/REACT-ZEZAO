@@ -14,15 +14,8 @@ export default function Login() {
   const { theme } = useTheme();
   const navigate = useNavigate();
 
-  // Fundo grande desfocado atrás do card: usa a foto com fundo sólido
-  // (branco ou preto, conforme o tema) — sem precisar de transparência,
-  // já que o fundo dela já bate com o fundo da página.
   const logoDeFundo = theme === "dark" ? logoOriginalDark : logoOriginal;
 
-  // Logo pequena dentro do card: aqui precisa da versão com transparência
-  // de verdade, porque o fundo do card (#EDEDED / #17171A) não é
-  // exatamente branco nem preto puro — uma imagem com fundo sólido
-  // apareceria com uma "caixa" visível ao redor.
   const logoDoCard = theme === "dark" ? logoCompletaDark : logoCompleta;
 
   const [nomeUsuario, setNomeUsuario] = useState("");

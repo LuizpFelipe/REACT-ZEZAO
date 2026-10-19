@@ -16,8 +16,6 @@ import {
 } from "@features/reposicao/utils/aulasMes";
 import "@shared/shared.css";
 
-// Aviso mínimo exigido pelo cliente: a reposição precisa ser remarcada com
-// pelo menos 24h de antecedência da aula de destino.
 const HORAS_MINIMAS_AVISO = 24;
 
 function iniciais(nome) {
@@ -36,9 +34,8 @@ export default function Alunos() {
   const [turmaFiltro, setTurmaFiltro] = useState("todas");
   const [carregando, setCarregando] = useState(true);
   const [erroCarregamento, setErroCarregamento] = useState("");
-  const [mensagem, setMensagem] = useState(null); // { tipo, texto }
+  const [mensagem, setMensagem] = useState(null);
 
-  // Estado do modal de reposição/remanejamento
   const [alunoRemanejando, setAlunoRemanejando] = useState(null);
   const [aulaPerdida, setAulaPerdida] = useState("");
   const [destino, setDestino] = useState("");
@@ -91,14 +88,11 @@ export default function Alunos() {
 
   const turmaOrigemRemanejando = turmas.find((t) => t.id === alunoRemanejando?.turmaId);
 
-  // Aulas já dadas neste mês, da turma do aluno — candidatas a "aula perdida".
   const ocorrenciasPassadas = useMemo(() => {
     if (!turmaOrigemRemanejando) return [];
     return gerarOcorrenciasDoMes(turmaOrigemRemanejando, ano, mes).filter((data) => mesmoDiaOuAntes(data, agora));
   }, [turmaOrigemRemanejando, ano, mes, agora]);
 
-  // Destinos possíveis: mesma categoria, outra turma, dentro do mesmo mês, e
-  // com pelo menos 24h de antecedência a partir de agora.
   const destinosDisponiveis = useMemo(() => {
     if (!turmaOrigemRemanejando) return [];
     const turmasMesmaCategoria = turmas.filter(

@@ -1,7 +1,5 @@
 import "./StatusBadge.css";
 
-// Mapeia o status (vindo do back-end) para o estilo visual do badge.
-// Adicionar novos status aqui conforme o back-end for definindo mais (ex: "Cancelado").
 const ESTILOS = {
   Ativo: "ok",
   Pago: "ok",

@@ -9,14 +9,13 @@ export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [carregandoSessao, setCarregandoSessao] = useState(true);
 
-  // Ao abrir o app, tenta recuperar a sessão salva (localStorage) para não
-  // pedir login de novo a cada F5.
   useEffect(() => {
-    const salvo = localStorage.getItem(CHAVE_STORAGE);
+    const salvo = sessionStorage.getItem(CHAVE_STORAGE) ?? localStorage.getItem(CHAVE_STORAGE);
     if (salvo) {
       try {
         setUsuario(JSON.parse(salvo));
       } catch {
+        sessionStorage.removeItem(CHAVE_STORAGE);
         localStorage.removeItem(CHAVE_STORAGE);
       }
     }
@@ -26,14 +25,16 @@ export function AuthProvider({ children }) {
   async function login(nomeUsuario, senha, manterConectado) {
     const usuarioLogado = await loginService(nomeUsuario, senha);
     setUsuario(usuarioLogado);
-    if (manterConectado) {
-      localStorage.setItem(CHAVE_STORAGE, JSON.stringify(usuarioLogado));
-    }
+    sessionStorage.removeItem(CHAVE_STORAGE);
+    localStorage.removeItem(CHAVE_STORAGE);
+    const armazenamento = manterConectado ? localStorage : sessionStorage;
+    armazenamento.setItem(CHAVE_STORAGE, JSON.stringify(usuarioLogado));
     return usuarioLogado;
   }
 
   function logout() {
     setUsuario(null);
+    sessionStorage.removeItem(CHAVE_STORAGE);
     localStorage.removeItem(CHAVE_STORAGE);
   }
 

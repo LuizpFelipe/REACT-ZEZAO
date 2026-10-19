@@ -4,8 +4,6 @@ import logoBrasaoDark from "@shared/assets/logo-brasao-dark.png";
 import ThemeToggle from "@shared/components/ThemeToggle/ThemeToggle";
 import { useAuth } from "@features/auth/hooks/useAuth";
 import { useTheme } from "@shared/hooks/useTheme";
-// Reaproveita o mesmo CSS do layout da Coordenação — as classes (coord-*)
-// já são genéricas o suficiente pra servir de topbar padrão do sistema.
 import "@shared/layouts/CoordenadorLayout/CoordenadorLayout.css";
 
 export default function ProfessorLayout() {

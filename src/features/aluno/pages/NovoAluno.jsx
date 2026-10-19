@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Input from "@shared/components/Input/Input";
 import Select from "@shared/components/Select/Select";
 import Button from "@shared/components/Button/Button";
@@ -26,11 +26,21 @@ const FORM_INICIAL = {
   foto: null,
 };
 
+function calcularIdade(dataIso) {
+  const [ano, mes, dia] = dataIso.split("-").map(Number);
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  let idade = hoje.getFullYear() - ano;
+  const aindaNaoFezAniversario = mesAtual < mes || (mesAtual === mes && hoje.getDate() < dia);
+  if (aindaNaoFezAniversario) idade--;
+  return idade;
+}
+
 export default function NovoAluno() {
   const [form, setForm] = useState(FORM_INICIAL);
   const [previewFoto, setPreviewFoto] = useState(null);
   const [enviando, setEnviando] = useState(false);
-  const [mensagem, setMensagem] = useState(null); // { tipo: "sucesso" | "erro", texto }
+  const [mensagem, setMensagem] = useState(null);
 
   const [turmas, setTurmas] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -45,9 +55,6 @@ export default function NovoAluno() {
         if (!ativo) return;
         setTurmas(turmasApi);
         setCategorias(categoriasApi);
-        if (turmasApi.length > 0) {
-          setForm((atual) => ({ ...atual, turmaId: turmasApi[0].id }));
-        }
       })
       .catch((err) => {
         if (ativo) setErroListas(err.message || "Não foi possível carregar turmas e categorias.");
@@ -65,9 +72,25 @@ export default function NovoAluno() {
     setForm((atual) => ({ ...atual, [campo]: valor }));
   }
 
-  function nomeCategoria(categoriaId) {
-    return categorias.find((c) => c.id === categoriaId)?.nome ?? "";
-  }
+  const categoriaDoAluno = useMemo(() => {
+    const dataIso = converterDataBrParaIso(form.dataNascimento);
+    if (!dataIso) return null;
+    const idade = calcularIdade(dataIso);
+    return categorias.find((categoria) => idade >= categoria.idadeMin && idade <= categoria.idadeMax) ?? null;
+  }, [form.dataNascimento, categorias]);
+
+  const turmasDisponiveis = useMemo(
+    () => (categoriaDoAluno ? turmas.filter((turma) => turma.categoriaId === categoriaDoAluno.id) : []),
+    [turmas, categoriaDoAluno]
+  );
+
+  useEffect(() => {
+    setForm((atual) => {
+      const turmaAindaValida = turmasDisponiveis.some((turma) => turma.id === atual.turmaId);
+      if (turmaAindaValida) return atual;
+      return { ...atual, turmaId: turmasDisponiveis[0]?.id ?? "" };
+    });
+  }, [turmasDisponiveis]);
 
   function selecionarFoto(arquivo) {
     if (previewFoto) URL.revokeObjectURL(previewFoto);
@@ -103,7 +126,7 @@ export default function NovoAluno() {
         foto: form.foto,
       });
       setMensagem({ tipo: "sucesso", texto: "Aluno cadastrado com sucesso." });
-      setForm({ ...FORM_INICIAL, turmaId: turmas[0]?.id ?? "" });
+      setForm(FORM_INICIAL);
       if (previewFoto) URL.revokeObjectURL(previewFoto);
       setPreviewFoto(null);
     } catch (err) {
@@ -113,9 +136,17 @@ export default function NovoAluno() {
     }
   }
 
-  const opcoesTurma = turmas.map((t) => ({
-    value: t.id,
-    label: `${t.nome} — ${t.diasSemana} ${t.horario} (${nomeCategoria(t.categoriaId)})`,
+  const dataDeNascimentoValida = Boolean(converterDataBrParaIso(form.dataNascimento));
+  const textoSemCategoria = dataDeNascimentoValida
+    ? "Nenhuma categoria para esta idade"
+    : "Informe a data de nascimento";
+  const mensagemSemTurma = categoriaDoAluno
+    ? `Nenhuma turma na categoria ${categoriaDoAluno.nome}`
+    : textoSemCategoria;
+
+  const opcoesTurma = turmasDisponiveis.map((turma) => ({
+    value: turma.id,
+    label: `${turma.nome} — ${turma.diasSemana} ${turma.horario}`,
   }));
 
   return (
@@ -206,7 +237,12 @@ export default function NovoAluno() {
 
           <div className="section-label">Turma e nível</div>
           <div className="form-row">
-            <Input id="categoria" label="Categoria (automática)" value="Calculada pela data de nascimento" disabled />
+            <Input
+              id="categoria"
+              label="Categoria (automática)"
+              value={categoriaDoAluno ? categoriaDoAluno.nome : textoSemCategoria}
+              disabled
+            />
             <Select
               id="nivelTecnico"
               label="Nível técnico"
@@ -222,7 +258,7 @@ export default function NovoAluno() {
               <Select
                 id="turma"
                 label="Turma / Horário"
-                options={opcoesTurma.length > 0 ? opcoesTurma : [{ value: "", label: "Nenhuma turma cadastrada" }]}
+                options={opcoesTurma.length > 0 ? opcoesTurma : [{ value: "", label: mensagemSemTurma }]}
                 value={form.turmaId}
                 onChange={(e) => atualizarCampo("turmaId", e.target.value)}
               />

@@ -53,7 +53,6 @@ export default function Professores() {
 
   function abrirEdicao(professor) {
     setEditandoId(professor.id);
-    // Usuário/senha não são editáveis aqui — troca de senha é um fluxo à parte.
     setForm({
       nome: professor.nome,
       telefone: professor.telefone,
