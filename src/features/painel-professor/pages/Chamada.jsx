@@ -17,7 +17,7 @@ export default function Chamada() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [turma, setTurma] = useState(null);
-  const [alunos, setAlunos] = useState([]); // [{ alunoId, nome, presente, ehInadimplente }]
+  const [alunos, setAlunos] = useState([]);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState(null);
 

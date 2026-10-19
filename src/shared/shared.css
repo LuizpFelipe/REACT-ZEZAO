@@ -344,7 +344,6 @@ table.data-table {
   object-fit: cover;
 }
 
-/* ---------- Painel do Professor: grid de turmas ---------- */
 .turma-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -411,7 +410,6 @@ table.data-table {
   margin-top: 8px;
 }
 
-/* ---------- Voltar (back-link) ---------- */
 .back-link {
   font-size: 11px;
   color: var(--ink-dim);
@@ -427,7 +425,6 @@ table.data-table {
   color: var(--ink);
 }
 
-/* ---------- Pill genérico (status livre, fora do StatusBadge) ---------- */
 .pill {
   font-size: 9px;
   font-family: var(--font-mono);
@@ -459,7 +456,6 @@ table.data-table {
   border: 1px solid var(--border-strong);
 }
 
-/* ---------- Campeonato: listagem ---------- */
 .camp-row {
   display: flex;
   align-items: center;
@@ -492,7 +488,6 @@ table.data-table {
   align-items: center;
 }
 
-/* ---------- Campeonato: abas ---------- */
 .tab-row {
   display: flex;
   gap: 2px;
@@ -518,7 +513,6 @@ table.data-table {
   font-weight: 600;
 }
 
-/* ---------- Campeonato: ranqueamento ---------- */
 .rank-badge {
   width: 24px;
   height: 24px;

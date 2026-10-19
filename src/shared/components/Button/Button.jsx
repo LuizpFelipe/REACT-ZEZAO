@@ -1,8 +1,3 @@
-/**
- * Botão padrão do sistema.
- * variant: "primary" (branco, ação principal) | "outline" (contorno, ação secundária)
- * size: "md" (padrão) | "sm" (compacto, usado em tabelas/ações rápidas)
- */
 export default function Button({
   children,
   variant = "primary",

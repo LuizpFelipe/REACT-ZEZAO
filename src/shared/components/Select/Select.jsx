@@ -1,7 +1,3 @@
-/**
- * Select padrão, já com label acoplado.
- * options: [{ value, label }]
- */
 export default function Select({ label, id, options = [], ...selectProps }) {
   return (
     <div>

@@ -4,7 +4,6 @@
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
-/* ---------- Tema claro (padrão) ---------- */
 :root,
 [data-theme="light"] {
   --bg: #FFFFFF;
@@ -33,7 +32,6 @@
   --amber-ink: #8A6A34;
 }
 
-/* ---------- Tema escuro ---------- */
 [data-theme="dark"] {
   --bg: #0B0B0C;
   --panel: #17171A;

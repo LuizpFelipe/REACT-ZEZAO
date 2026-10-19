@@ -39,7 +39,6 @@ export default function CampeonatoDetalhe() {
 
   useEffect(() => {
     carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campeonatoId]);
 
   async function carregar() {
@@ -73,7 +72,6 @@ export default function CampeonatoDetalhe() {
     [participacoes]
   );
 
-  // Só alunos da mesma categoria do campeonato, e que ainda não estão inscritos.
   const alunosDisponiveis = useMemo(() => {
     const inscritoIds = new Set(participacoes.map((p) => p.alunoId));
     return alunos.filter((a) => a.categoriaId === campeonato?.categoriaId && !inscritoIds.has(a.id));

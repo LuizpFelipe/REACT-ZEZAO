@@ -24,7 +24,6 @@ export default function Financeiro() {
   const [processandoId, setProcessandoId] = useState(null);
   useEffect(() => {
     carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFiltro]);
 
   async function carregar() {
@@ -49,8 +48,6 @@ export default function Financeiro() {
   async function handleDispararTodos() {
     setDisparando(true);
     try {
-      // Não existe disparo em lote no back — dispara uma a uma pra cada
-      // parcela em aberto que está sendo exibida na tela.
       for (const parcela of parcelasEmAberto) {
         await dispararCobranca(parcela.id);
       }
