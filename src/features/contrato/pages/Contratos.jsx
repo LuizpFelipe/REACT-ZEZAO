@@ -11,6 +11,7 @@ export default function Contratos() {
   const [alunos, setAlunos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [processandoId, setProcessandoId] = useState(null);
+  const [avisoDoContrato, setAvisoDoContrato] = useState("");
 
   useEffect(() => {
     carregar();
@@ -40,6 +41,7 @@ export default function Contratos() {
 
   async function handleBaixarPdf(contratoId) {
     setProcessandoId(contratoId);
+    setAvisoDoContrato("");
     try {
       const blob = await baixarContratoPdf(contratoId);
       const url = URL.createObjectURL(blob);
@@ -49,7 +51,11 @@ export default function Contratos() {
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err.message || "Não foi possível gerar o PDF do contrato.");
+      const mensagemDoErro = err.message || "Não foi possível gerar o PDF do contrato.";
+      const faltaCpf = mensagemDoErro.toLowerCase().includes("cpf");
+      setAvisoDoContrato(
+        faltaCpf ? `${mensagemDoErro} Abra a tela Alunos e use "CPF do responsável".` : mensagemDoErro
+      );
     } finally {
       setProcessandoId(null);
     }
@@ -75,6 +81,11 @@ export default function Contratos() {
   return (
     <div className="card">
       <h3><span className="dot" /> Contratos</h3>
+      {avisoDoContrato && (
+        <p className="helper-text" style={{ color: "var(--red-ink)" }}>
+          {avisoDoContrato}
+        </p>
+      )}
       {contratos.length === 0 ? (
         <p className="helper-text">Nenhum contrato encontrado.</p>
       ) : (

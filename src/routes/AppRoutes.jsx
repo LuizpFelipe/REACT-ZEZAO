@@ -4,6 +4,7 @@ import Login from "@features/auth/pages/Login";
 import RecuperarSenha from "@features/auth/pages/RecuperarSenha";
 import MinhasTurmas from "@features/painel-professor/pages/MinhasTurmas";
 import Chamada from "@features/painel-professor/pages/Chamada";
+import ChamadaMensal from "@features/painel-professor/pages/ChamadaMensal";
 import Campeonatos from "@features/campeonato/pages/Campeonatos";
 import CampeonatoDetalhe from "@features/campeonato/pages/CampeonatoDetalhe";
 import ProfessorLayout from "@shared/layouts/ProfessorLayout/ProfessorLayout";
@@ -57,6 +58,7 @@ export default function AppRoutes() {
       >
         <Route index element={<MinhasTurmas />} />
         <Route path="chamada/:turmaId" element={<Chamada />} />
+        <Route path="chamada-mensal/:turmaId" element={<ChamadaMensal />} />
       </Route>
 
       <Route

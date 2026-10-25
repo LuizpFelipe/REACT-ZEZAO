@@ -7,6 +7,7 @@ import { criarAluno } from "../services/alunoService";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
 import { converterDataBrParaIso } from "@shared/utils/data";
+import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
 import "@shared/shared.css";
 
 const NIVEIS_TECNICOS = [
@@ -21,6 +22,7 @@ const FORM_INICIAL = {
   nivelTecnico: NIVEIS_TECNICOS[0].value,
   turmaId: "",
   responsavel: "",
+  responsavelCpf: "",
   telefone: "",
   endereco: "",
   foto: null,
@@ -41,6 +43,7 @@ export default function NovoAluno() {
   const [previewFoto, setPreviewFoto] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState(null);
+  const [erroCpf, setErroCpf] = useState("");
 
   const [turmas, setTurmas] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -108,6 +111,12 @@ export default function NovoAluno() {
       return;
     }
 
+    const mensagemDoCpf = validarCpfDoResponsavel(form.responsavelCpf);
+    if (mensagemDoCpf) {
+      setErroCpf(mensagemDoCpf);
+      return;
+    }
+
     if (!form.turmaId) {
       setMensagem({ tipo: "erro", texto: "Selecione uma turma." });
       return;
@@ -120,6 +129,7 @@ export default function NovoAluno() {
         dataNascimentoIso: dataIso,
         nivelTecnico: form.nivelTecnico,
         responsavelNome: form.responsavel,
+        responsavelCpf: form.responsavelCpf,
         telefone: form.telefone,
         endereco: form.endereco,
         turmaId: form.turmaId,
@@ -127,6 +137,7 @@ export default function NovoAluno() {
       });
       setMensagem({ tipo: "sucesso", texto: "Aluno cadastrado com sucesso." });
       setForm(FORM_INICIAL);
+      setErroCpf("");
       if (previewFoto) URL.revokeObjectURL(previewFoto);
       setPreviewFoto(null);
     } catch (err) {
@@ -146,7 +157,7 @@ export default function NovoAluno() {
 
   const opcoesTurma = turmasDisponiveis.map((turma) => ({
     value: turma.id,
-    label: `${turma.nome} — ${turma.diasSemana} ${turma.horario}`,
+    label: `${turma.nome} — ${turma.diasLegiveis} ${turma.horario}`,
   }));
 
   return (
@@ -217,6 +228,27 @@ export default function NovoAluno() {
               value={form.responsavel}
               onChange={(e) => atualizarCampo("responsavel", e.target.value)}
             />
+            <div>
+              <Input
+                id="responsavelCpf"
+                label="CPF do responsável"
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                value={form.responsavelCpf}
+                onChange={(e) => {
+                  atualizarCampo("responsavelCpf", formatarCpf(e.target.value));
+                  setErroCpf("");
+                }}
+                onBlur={() => setErroCpf(validarCpfDoResponsavel(form.responsavelCpf))}
+              />
+              {erroCpf && (
+                <p className="helper-text" style={{ color: "var(--red-ink)", marginTop: 4 }}>
+                  {erroCpf}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="form-row full">
             <Input
               id="telefone"
               label="Telefone"

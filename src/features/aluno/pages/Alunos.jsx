@@ -5,7 +5,8 @@ import Modal from "@shared/components/Modal/Modal";
 import Select from "@shared/components/Select/Select";
 import Input from "@shared/components/Input/Input";
 import Button from "@shared/components/Button/Button";
-import { listarAlunos } from "../services/alunoService";
+import { listarAlunos, atualizarCpfDoResponsavel } from "../services/alunoService";
+import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { registrarRemanejamento } from "@features/reposicao/services/reposicaoService";
 import {
@@ -41,6 +42,11 @@ export default function Alunos() {
   const [destino, setDestino] = useState("");
   const [enviandoRemanejamento, setEnviandoRemanejamento] = useState(false);
   const [erroModal, setErroModal] = useState("");
+
+  const [alunoEditandoCpf, setAlunoEditandoCpf] = useState(null);
+  const [cpfEmEdicao, setCpfEmEdicao] = useState("");
+  const [salvandoCpf, setSalvandoCpf] = useState(false);
+  const [erroCpf, setErroCpf] = useState("");
 
   const agora = useMemo(() => new Date(), []);
   const limiteAviso = useMemo(() => new Date(agora.getTime() + HORAS_MINIMAS_AVISO * 60 * 60 * 1000), [agora]);
@@ -83,7 +89,7 @@ export default function Alunos() {
 
   const opcoesTurmaFiltro = [
     { value: "todas", label: "Todas as turmas" },
-    ...turmas.map((t) => ({ value: t.id, label: `${t.nome} — ${t.diasSemana} ${t.horario}` })),
+    ...turmas.map((t) => ({ value: t.id, label: `${t.nome} — ${t.diasLegiveis} ${t.horario}` })),
   ];
 
   const turmaOrigemRemanejando = turmas.find((t) => t.id === alunoRemanejando?.turmaId);
@@ -115,6 +121,37 @@ export default function Alunos() {
 
   function fecharModal() {
     setAlunoRemanejando(null);
+  }
+
+  function abrirEdicaoDoCpf(aluno) {
+    setAlunoEditandoCpf(aluno);
+    setCpfEmEdicao(formatarCpf(aluno.responsavelCpf));
+    setErroCpf("");
+  }
+
+  function fecharEdicaoDoCpf() {
+    setAlunoEditandoCpf(null);
+  }
+
+  async function confirmarEdicaoDoCpf(event) {
+    event.preventDefault();
+    const mensagemDoCpf = validarCpfDoResponsavel(cpfEmEdicao);
+    if (mensagemDoCpf) {
+      setErroCpf(mensagemDoCpf);
+      return;
+    }
+
+    setSalvandoCpf(true);
+    try {
+      await atualizarCpfDoResponsavel(alunoEditandoCpf, cpfEmEdicao);
+      setAlunos(await listarAlunos());
+      setMensagem({ tipo: "sucesso", texto: `CPF do responsável de ${alunoEditandoCpf.nome} atualizado.` });
+      fecharEdicaoDoCpf();
+    } catch (err) {
+      setErroCpf(err.message || "Não foi possível atualizar o CPF.");
+    } finally {
+      setSalvandoCpf(false);
+    }
   }
 
   async function confirmarRemanejamento(event) {
@@ -183,7 +220,7 @@ export default function Alunos() {
       {turmaSelecionada && (
         <div className="notice" style={{ marginTop: 0, marginBottom: 16 }}>
           <div>
-            <b>{turmaSelecionada.nome}</b> · {turmaSelecionada.diasSemana} {turmaSelecionada.horario}
+            <b>{turmaSelecionada.nome}</b> · {turmaSelecionada.diasLegiveis} {turmaSelecionada.horario}
             {" — "}
             <b>{alunosFiltrados.length}</b> aluno(s) matriculado(s)
             {totalInadimplentes > 0 && (
@@ -232,6 +269,7 @@ export default function Alunos() {
                         {aluno.status === "Inadimplente" && <span className="flag-dot" />}
                         {aluno.nome}
                       </span>
+                      {!aluno.responsavelCpf && <span className="pill pill--warn">CPF pendente</span>}
                     </div>
                   </td>
                   {turmaFiltro === "todas" && <td>{nomeTurma(aluno.turmaId)}</td>}
@@ -240,9 +278,14 @@ export default function Alunos() {
                     <StatusBadge status={aluno.status} />
                   </td>
                   <td>
-                    <Button variant="outline" size="sm" onClick={() => abrirRemanejamento(aluno)}>
-                      Repor Aula
-                    </Button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <Button variant="outline" size="sm" onClick={() => abrirRemanejamento(aluno)}>
+                        Repor Aula
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => abrirEdicaoDoCpf(aluno)}>
+                        CPF do responsável
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -258,13 +301,49 @@ export default function Alunos() {
         </div>
       )}
 
+      <Modal open={!!alunoEditandoCpf} title="CPF do responsável" onClose={fecharEdicaoDoCpf}>
+        {alunoEditandoCpf && (
+          <form onSubmit={confirmarEdicaoDoCpf}>
+            <p className="helper-text" style={{ marginTop: 0 }}>
+              {alunoEditandoCpf.nome} · Responsável: <b>{alunoEditandoCpf.responsavelNome}</b>
+            </p>
+            <div className="form-row full">
+              <Input
+                id="cpfDoResponsavel"
+                label="CPF do responsável"
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                value={cpfEmEdicao}
+                onChange={(e) => {
+                  setCpfEmEdicao(formatarCpf(e.target.value));
+                  setErroCpf("");
+                }}
+              />
+            </div>
+            {erroCpf && (
+              <p className="helper-text" style={{ color: "var(--red-ink)" }}>
+                {erroCpf}
+              </p>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
+              <Button type="button" variant="outline" onClick={fecharEdicaoDoCpf}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={salvandoCpf}>
+                {salvandoCpf ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
       <Modal open={!!alunoRemanejando} title="Repor Aula" onClose={fecharModal}>
         {alunoRemanejando && (
           <form onSubmit={confirmarRemanejamento}>
             <p className="helper-text" style={{ marginTop: 0 }}>
               {alunoRemanejando.nome} · Turma atual: <b>{nomeTurma(alunoRemanejando.turmaId)}</b>
               {turmaOrigemRemanejando
-                ? ` (${turmaOrigemRemanejando.diasSemana} ${turmaOrigemRemanejando.horario})`
+                ? ` (${turmaOrigemRemanejando.diasLegiveis} ${turmaOrigemRemanejando.horario})`
                 : ""}
             </p>
 

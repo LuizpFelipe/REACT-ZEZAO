@@ -16,7 +16,8 @@ export async function listarContratos() {
 export async function baixarContratoPdf(contratoId) {
   const response = await fetchApi(`${API_URL}/Contratos/${contratoId}/pdf`);
   if (!response.ok) {
-    throw new Error("Não foi possível gerar o PDF do contrato.");
+    const corpo = await response.json().catch(() => null);
+    throw new Error(corpo?.message || "Não foi possível gerar o PDF do contrato.");
   }
   return response.blob();
 }
