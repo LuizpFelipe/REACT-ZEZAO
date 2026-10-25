@@ -94,7 +94,7 @@ export default function Chamada() {
     try {
       const listaPresencas = alunos.map((aluno) => ({
         alunoId: aluno.alunoId,
-        presente: !!aluno.presente,
+        presente: aluno.presente === true,
       }));
       await registrarChamada(turmaId, dataAula, listaPresencas);
       setMensagem({ tipo: "sucesso", texto: "Chamada salva com sucesso." });
@@ -130,8 +130,9 @@ export default function Chamada() {
   }
 
   const quantidadeInadimplentes = alunos.filter((aluno) => aluno.ehInadimplente).length;
-  const quantidadePresentes = alunos.filter((aluno) => aluno.presente).length;
-  const quantidadeFaltas = alunos.length - quantidadePresentes;
+  const quantidadePresentes = alunos.filter((aluno) => aluno.presente === true).length;
+  const quantidadeFaltas = alunos.filter((aluno) => aluno.presente === false).length;
+  const quantidadePendentes = alunos.length - quantidadePresentes - quantidadeFaltas;
 
   return (
     <>
@@ -202,7 +203,8 @@ export default function Chamada() {
               </button>
               <span className="helper-text" style={{ margin: 0, alignSelf: "center" }}>
                 C: <b style={{ color: "var(--ink)" }}>{quantidadePresentes}</b> · F:{" "}
-                <b style={{ color: "var(--ink)" }}>{quantidadeFaltas}</b>
+                <b style={{ color: "var(--ink)" }}>{quantidadeFaltas}</b> · Sem marcação:{" "}
+                <b style={{ color: "var(--ink)" }}>{quantidadePendentes}</b>
               </span>
             </div>
 
@@ -237,14 +239,15 @@ export default function Chamada() {
                           ) : (
                             aluno.nome
                           )}
+                          {aluno.ehReposicao && <span className="badge-reposicao">Reposição</span>}
                         </div>
                       </td>
                       <td style={{ textAlign: "center" }}>
                         <div className="marcacao-grupo" role="group" aria-label={`Presença de ${aluno.nome}`}>
                           <button
                             type="button"
-                            className={`marcacao-botao marcacao-botao--compareceu${aluno.presente ? " marcacao-botao--ativo" : ""}`}
-                            aria-pressed={!!aluno.presente}
+                            className={`marcacao-botao marcacao-botao--compareceu${aluno.presente === true ? " marcacao-botao--ativo" : ""}`}
+                            aria-pressed={aluno.presente === true}
                             aria-label={`${aluno.nome} compareceu`}
                             disabled={!podeEditar}
                             onClick={() => marcarAluno(aluno.alunoId, true)}
@@ -253,8 +256,8 @@ export default function Chamada() {
                           </button>
                           <button
                             type="button"
-                            className={`marcacao-botao marcacao-botao--faltou${!aluno.presente ? " marcacao-botao--ativo" : ""}`}
-                            aria-pressed={!aluno.presente}
+                            className={`marcacao-botao marcacao-botao--faltou${aluno.presente === false ? " marcacao-botao--ativo" : ""}`}
+                            aria-pressed={aluno.presente === false}
                             aria-label={`${aluno.nome} faltou`}
                             disabled={!podeEditar}
                             onClick={() => marcarAluno(aluno.alunoId, false)}
@@ -276,7 +279,12 @@ export default function Chamada() {
         <button className="btn btn-outline" onClick={() => navigate(`/professor?data=${dataAula}`)}>
           Cancelar
         </button>
-        <button className="btn btn-primary" onClick={handleSalvar} disabled={salvando || alunos.length === 0 || !podeEditar}>
+        <button
+          className="btn btn-primary"
+          onClick={handleSalvar}
+          disabled={salvando || alunos.length === 0 || !podeEditar || quantidadePendentes > 0}
+          title={quantidadePendentes > 0 ? "Marque todos os alunos antes de salvar." : undefined}
+        >
           {salvando ? "Salvando..." : "Salvar Chamada"}
         </button>
       </div>
