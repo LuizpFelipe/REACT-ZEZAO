@@ -12,3 +12,20 @@ export function converterDataIsoParaBr(dataIso) {
   if (!ano || !mes || !dia) return dataIso;
   return `${dia}/${mes}/${ano}`;
 }
+
+function completarComZero(numero) {
+  return String(numero).padStart(2, "0");
+}
+
+export function obterDataLocalIso(data = new Date()) {
+  return `${data.getFullYear()}-${completarComZero(data.getMonth() + 1)}-${completarComZero(data.getDate())}`;
+}
+
+export function obterMesLocal(data = new Date()) {
+  return `${data.getFullYear()}-${completarComZero(data.getMonth() + 1)}`;
+}
+
+export function formatarDiaMes(dataIso) {
+  const [, mes, dia] = dataIso.split("T")[0].split("-");
+  return `${dia}/${mes}`;
+}

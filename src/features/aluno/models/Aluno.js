@@ -11,6 +11,7 @@ export function criarAlunoFromApi(apiResponse) {
     turmaId: apiResponse.turmaId,
     categoriaId: apiResponse.categoriaId,
     responsavelNome: apiResponse.responsavelNome,
+    responsavelCpf: apiResponse.responsavelCpf ?? "",
     telefone: apiResponse.telefone,
     endereco: apiResponse.endereco,
     fotoUrl: apiResponse.fotoUrl ?? null,

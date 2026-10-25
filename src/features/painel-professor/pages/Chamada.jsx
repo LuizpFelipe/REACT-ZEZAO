@@ -1,31 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Loading from "@shared/components/Loading/Loading";
+import Input from "@shared/components/Input/Input";
 import { listarTurmas } from "@features/turma/services/turmaService";
+import { converterDataIsoParaBr, obterDataLocalIso } from "@shared/utils/data";
 import { registrarChamada, obterChamadaPorTurmaEData } from "../services/presencaService";
 import "@shared/shared.css";
-
-function hojeIso() {
-  return new Date().toISOString().slice(0, 10);
-}
+import "./Chamada.css";
 
 export default function Chamada() {
   const { turmaId } = useParams();
   const navigate = useNavigate();
-  const data = useMemo(() => hojeIso(), []);
+  const [parametrosDaUrl, setParametrosDaUrl] = useSearchParams();
+
+  const hoje = useMemo(() => obterDataLocalIso(), []);
+  const dataAula = parametrosDaUrl.get("data") || hoje;
 
   const [carregando, setCarregando] = useState(true);
+  const [carregandoAlunos, setCarregandoAlunos] = useState(false);
   const [erro, setErro] = useState("");
   const [turma, setTurma] = useState(null);
   const [alunos, setAlunos] = useState([]);
+  const [podeEditar, setPodeEditar] = useState(true);
+  const [avisoDaData, setAvisoDaData] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState(null);
 
   useEffect(() => {
-    carregar();
+    carregarTurma();
   }, [turmaId]);
 
-  async function carregar() {
+  useEffect(() => {
+    if (turma) carregarChamada();
+  }, [turma, dataAula]);
+
+  async function carregarTurma() {
     setCarregando(true);
     setErro("");
     try {
@@ -36,13 +45,6 @@ export default function Chamada() {
         return;
       }
       setTurma(turmaAtual);
-
-      try {
-        const roster = await obterChamadaPorTurmaEData(turmaId, data);
-        setAlunos(roster);
-      } catch {
-        setAlunos([]);
-      }
     } catch (err) {
       setErro(err.message || "Não foi possível carregar a chamada.");
     } finally {
@@ -50,10 +52,40 @@ export default function Chamada() {
     }
   }
 
-  function alternarPresenca(alunoId) {
-    setAlunos((atual) =>
-      atual.map((aluno) => (aluno.alunoId === alunoId ? { ...aluno, presente: !aluno.presente } : aluno))
-    );
+  async function carregarChamada() {
+    setCarregandoAlunos(true);
+    setMensagem(null);
+    setAvisoDaData("");
+    try {
+      const chamada = await obterChamadaPorTurmaEData(turmaId, dataAula);
+      setAlunos(chamada.alunos);
+      setPodeEditar(chamada.podeEditar);
+      if (!chamada.podeEditar) {
+        setAvisoDaData(
+          chamada.motivoSomenteLeitura ||
+            "Esta chamada está somente para leitura. Peça à Coordenação para corrigir."
+        );
+      }
+    } catch (err) {
+      setAlunos([]);
+      setPodeEditar(false);
+      setAvisoDaData(err.message || "Não foi possível carregar a chamada desta data.");
+    } finally {
+      setCarregandoAlunos(false);
+    }
+  }
+
+  function alterarData(novaData) {
+    if (!novaData) return;
+    setParametrosDaUrl({ data: novaData }, { replace: true });
+  }
+
+  function marcarAluno(alunoId, presente) {
+    setAlunos((atual) => atual.map((aluno) => (aluno.alunoId === alunoId ? { ...aluno, presente } : aluno)));
+  }
+
+  function marcarTodos(presente) {
+    setAlunos((atual) => atual.map((aluno) => ({ ...aluno, presente })));
   }
 
   async function handleSalvar() {
@@ -64,7 +96,7 @@ export default function Chamada() {
         alunoId: aluno.alunoId,
         presente: !!aluno.presente,
       }));
-      await registrarChamada(turmaId, data, listaPresencas);
+      await registrarChamada(turmaId, dataAula, listaPresencas);
       setMensagem({ tipo: "sucesso", texto: "Chamada salva com sucesso." });
     } catch (err) {
       setMensagem({
@@ -74,6 +106,10 @@ export default function Chamada() {
     } finally {
       setSalvando(false);
     }
+  }
+
+  function abrirChamadaDoMes() {
+    navigate(`/professor/chamada-mensal/${turmaId}?mes=${dataAula.slice(0, 7)}`);
   }
 
   if (carregando) {
@@ -93,11 +129,13 @@ export default function Chamada() {
     );
   }
 
-  const qtdInadimplentes = alunos.filter((a) => a.ehInadimplente).length;
+  const quantidadeInadimplentes = alunos.filter((aluno) => aluno.ehInadimplente).length;
+  const quantidadePresentes = alunos.filter((aluno) => aluno.presente).length;
+  const quantidadeFaltas = alunos.length - quantidadePresentes;
 
   return (
     <>
-      <Link to="/professor" className="back-link">
+      <Link to={`/professor?data=${dataAula}`} className="back-link">
         ← Minhas Turmas
       </Link>
 
@@ -106,12 +144,29 @@ export default function Chamada() {
         <h1 className="coord-title">Chamada — {turma.nome}</h1>
       </div>
 
-      <div className="table-toolbar" style={{ marginBottom: 14 }}>
+      <div className="chamada-modo">
+        <button type="button" className="tab-item tab-item--active">
+          Dia
+        </button>
+        <button type="button" className="tab-item" onClick={abrirChamadaDoMes}>
+          Mês
+        </button>
+      </div>
+
+      <div className="chamada-filtros">
+        <Input
+          id="dataAula"
+          label="Data da aula"
+          type="date"
+          max={hoje}
+          value={dataAula}
+          onChange={(e) => alterarData(e.target.value)}
+        />
         <span className="helper-text" style={{ margin: 0 }}>
-          <b style={{ color: "var(--ink)" }}>{turma.nome}</b> · {turma.diasSemana} {turma.horario} · Data:{" "}
-          <b style={{ color: "var(--ink)" }}>{data.split("-").reverse().join("/")}</b> ·{" "}
+          <b style={{ color: "var(--ink)" }}>{turma.nome}</b> · {turma.diasLegiveis} {turma.horario} · Data:{" "}
+          <b style={{ color: "var(--ink)" }}>{converterDataIsoParaBr(dataAula)}</b> ·{" "}
           <b style={{ color: "var(--ink)" }}>{alunos.length}</b> alunos matriculados ·{" "}
-          <b style={{ color: "var(--ink)" }}>{qtdInadimplentes}</b> inadimplente(s)
+          <b style={{ color: "var(--ink)" }}>{quantidadeInadimplentes}</b> inadimplente(s)
         </span>
       </div>
 
@@ -120,66 +175,108 @@ export default function Chamada() {
           <span className="dot" /> Lista de Presença
         </h3>
 
+        {avisoDaData && (
+          <div className="notice" style={{ marginTop: 0, marginBottom: 14 }}>
+            <div>{avisoDaData}</div>
+          </div>
+        )}
+
         {mensagem && (
           <p className="helper-text" style={{ color: mensagem.tipo === "erro" ? "var(--red-ink)" : "var(--green-ink)" }}>
             {mensagem.texto}
           </p>
         )}
 
-        {alunos.length === 0 ? (
-          <p className="helper-text">Nenhum aluno matriculado nesta turma.</p>
+        {carregandoAlunos ? (
+          <Loading label="Carregando chamada..." />
+        ) : alunos.length === 0 ? (
+          <p className="helper-text">Nenhum aluno para exibir nesta data.</p>
         ) : (
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th style={{ textAlign: "center" }}>Presente</th>
-                  <th>Aluno</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alunos.map((aluno) => (
-                  <tr key={aluno.alunoId}>
-                    <td style={{ textAlign: "center" }}>
-                      <input
-                        type="checkbox"
-                        checked={!!aluno.presente}
-                        onChange={() => alternarPresenca(aluno.alunoId)}
-                      />
-                    </td>
-                    <td>
-                      <div className="aluno-cell">
-                        <div className="avatar">
-                          {aluno.nome
-                            .split(" ")
-                            .slice(0, 2)
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </div>
-                        {aluno.ehInadimplente ? (
-                          <span className="name-flag">
-                            <span className="flag-dot" />
-                            {aluno.nome}
-                          </span>
-                        ) : (
-                          aluno.nome
-                        )}
-                      </div>
-                    </td>
+          <>
+            <div className="chamada-acoes-em-massa">
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => marcarTodos(true)} disabled={!podeEditar}>
+                Marcar todos como C
+              </button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => marcarTodos(false)} disabled={!podeEditar}>
+                Marcar todos como F
+              </button>
+              <span className="helper-text" style={{ margin: 0, alignSelf: "center" }}>
+                C: <b style={{ color: "var(--ink)" }}>{quantidadePresentes}</b> · F:{" "}
+                <b style={{ color: "var(--ink)" }}>{quantidadeFaltas}</b>
+              </span>
+            </div>
+
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th className="chamada-numero">Nº</th>
+                    <th>Aluno</th>
+                    <th style={{ textAlign: "center" }}>Presença</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {alunos.map((aluno, indice) => (
+                    <tr key={aluno.alunoId}>
+                      <td className="chamada-numero">{indice + 1}</td>
+                      <td>
+                        <div className="aluno-cell">
+                          <div className="avatar">
+                            {aluno.nome
+                              .split(" ")
+                              .slice(0, 2)
+                              .map((parte) => parte[0])
+                              .join("")
+                              .toUpperCase()}
+                          </div>
+                          {aluno.ehInadimplente ? (
+                            <span className="name-flag">
+                              <span className="flag-dot" />
+                              {aluno.nome}
+                            </span>
+                          ) : (
+                            aluno.nome
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        <div className="marcacao-grupo" role="group" aria-label={`Presença de ${aluno.nome}`}>
+                          <button
+                            type="button"
+                            className={`marcacao-botao marcacao-botao--compareceu${aluno.presente ? " marcacao-botao--ativo" : ""}`}
+                            aria-pressed={!!aluno.presente}
+                            aria-label={`${aluno.nome} compareceu`}
+                            disabled={!podeEditar}
+                            onClick={() => marcarAluno(aluno.alunoId, true)}
+                          >
+                            C
+                          </button>
+                          <button
+                            type="button"
+                            className={`marcacao-botao marcacao-botao--faltou${!aluno.presente ? " marcacao-botao--ativo" : ""}`}
+                            aria-pressed={!aluno.presente}
+                            aria-label={`${aluno.nome} faltou`}
+                            disabled={!podeEditar}
+                            onClick={() => marcarAluno(aluno.alunoId, false)}
+                          >
+                            F
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-        <button className="btn btn-outline" onClick={() => navigate("/professor")}>
+        <button className="btn btn-outline" onClick={() => navigate(`/professor?data=${dataAula}`)}>
           Cancelar
         </button>
-        <button className="btn btn-primary" onClick={handleSalvar} disabled={salvando || alunos.length === 0}>
+        <button className="btn btn-primary" onClick={handleSalvar} disabled={salvando || alunos.length === 0 || !podeEditar}>
           {salvando ? "Salvando..." : "Salvar Chamada"}
         </button>
       </div>

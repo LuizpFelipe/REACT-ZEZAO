@@ -1,0 +1,153 @@
+.chamada-modo {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+
+.chamada-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.chamada-acoes-em-massa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chamada-numero {
+  width: 36px;
+  font-family: var(--font-mono);
+  color: var(--ink-faint);
+}
+
+.marcacao-grupo {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.marcacao-botao {
+  width: 38px;
+  height: 34px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  background: var(--panel-alt);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+
+.marcacao-botao:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.marcacao-botao--compareceu.marcacao-botao--ativo {
+  background: var(--green-bg);
+  color: var(--green-ink);
+  border-color: var(--green-ink);
+}
+
+.marcacao-botao--faltou.marcacao-botao--ativo {
+  background: var(--red-bg);
+  color: var(--red-ink);
+  border-color: var(--red-ink);
+}
+
+.matriz-rolagem {
+  overflow-x: auto;
+}
+
+table.matriz-chamada {
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 100%;
+}
+
+.matriz-chamada th,
+.matriz-chamada td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.matriz-chamada th {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.matriz-coluna-numero,
+.matriz-coluna-nome {
+  position: sticky;
+  background: var(--bg);
+  z-index: 1;
+}
+
+.matriz-coluna-numero {
+  left: 0;
+  min-width: 36px;
+}
+
+.matriz-coluna-nome {
+  left: 36px;
+  min-width: 170px;
+  text-align: left !important;
+  border-right: 1px solid var(--border);
+}
+
+.matriz-cabecalho-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.matriz-lapis {
+  width: 26px;
+  height: 26px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.celula-presenca {
+  display: inline-block;
+  min-width: 26px;
+  padding: 3px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.celula-presenca--compareceu {
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+
+.celula-presenca--faltou {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+
+.celula-presenca--vazia {
+  color: var(--ink-faint);
+}
+
+@media (max-width: 640px) {
+  .marcacao-botao {
+    width: 44px;
+    height: 40px;
+  }
+}

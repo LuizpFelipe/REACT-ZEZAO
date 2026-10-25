@@ -7,9 +7,10 @@ import Loading from "@shared/components/Loading/Loading";
 import { listarTurmas, criarTurma, atualizarTurma, removerTurma } from "../services/turmaService";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
 import { listarProfessores } from "@features/professor/services/professorService";
+import { DIAS_DA_SEMANA, converterDiasParaLista, formatarListaDeDias } from "../models/Turma";
 import "@shared/shared.css";
 
-const FORM_INICIAL = { nome: "", diasSemana: "", horario: "", categoriaId: "", professorId: "" };
+const FORM_INICIAL = { nome: "", diasSelecionados: [], horario: "", categoriaId: "", professorId: "" };
 
 export default function Turmas() {
   const [turmas, setTurmas] = useState([]);
@@ -64,7 +65,7 @@ export default function Turmas() {
     setEditandoId(turma.id);
     setForm({
       nome: turma.nome,
-      diasSemana: turma.diasSemana,
+      diasSelecionados: converterDiasParaLista(turma.diasSemana),
       horario: turma.horario,
       categoriaId: turma.categoriaId,
       professorId: turma.professorId,
@@ -77,22 +78,44 @@ export default function Turmas() {
     setModalAberto(false);
   }
 
+  function alternarDia(dia) {
+    setForm((atual) => ({
+      ...atual,
+      diasSelecionados: atual.diasSelecionados.includes(dia)
+        ? atual.diasSelecionados.filter((diaSelecionado) => diaSelecionado !== dia)
+        : [...atual.diasSelecionados, dia],
+    }));
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setErroModal("");
 
-    if (!form.nome || !form.diasSemana || !form.horario || !form.categoriaId || !form.professorId) {
+    if (!form.nome || !form.horario || !form.categoriaId || !form.professorId) {
       setErroModal("Preencha todos os campos.");
       return;
     }
 
+    if (form.diasSelecionados.length === 0) {
+      setErroModal("Marque pelo menos um dia da semana.");
+      return;
+    }
+
+    const dadosDaTurma = {
+      nome: form.nome,
+      diasSemana: formatarListaDeDias(form.diasSelecionados),
+      horario: form.horario,
+      categoriaId: form.categoriaId,
+      professorId: form.professorId,
+    };
+
     setEnviando(true);
     try {
       if (editandoId) {
-        await atualizarTurma(editandoId, form);
+        await atualizarTurma(editandoId, dadosDaTurma);
         setMensagem({ tipo: "sucesso", texto: "Turma atualizada com sucesso." });
       } else {
-        await criarTurma(form);
+        await criarTurma(dadosDaTurma);
         setMensagem({ tipo: "sucesso", texto: "Turma criada com sucesso." });
       }
       fecharModal();
@@ -165,7 +188,7 @@ export default function Turmas() {
                 <tr key={turma.id}>
                   <td>{turma.nome}</td>
                   <td className="mono">
-                    {turma.diasSemana} {turma.horario}
+                    {turma.diasLegiveis} {turma.horario}
                   </td>
                   <td>{nomeCategoria(turma.categoriaId)}</td>
                   <td>{nomeProfessor(turma.professorId)}</td>
@@ -210,13 +233,22 @@ export default function Turmas() {
             />
           </div>
           <div className="form-row full">
-            <Input
-              id="diasSemana"
-              label="Dias da semana"
-              placeholder="Ex: Seg/Qua"
-              value={form.diasSemana}
-              onChange={(e) => setForm((f) => ({ ...f, diasSemana: e.target.value }))}
-            />
+            <div>
+              <label>Dias da semana</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginTop: 6 }}>
+                {DIAS_DA_SEMANA.map((dia) => (
+                  <label key={dia} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={form.diasSelecionados.includes(dia)}
+                      onChange={() => alternarDia(dia)}
+                      style={{ width: "auto" }}
+                    />
+                    {dia}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="form-row">
             <Select
