@@ -13,7 +13,7 @@ function normalizar(token) {
 export function parseDiasSemana(diasSemanaStr) {
   if (!diasSemanaStr) return [];
   return diasSemanaStr
-    .split(/[\/,;]|\se\s/)
+    .split(/[/,;]|\se\s/)
     .map(normalizar)
     .map((d) => DIAS_SEMANA[d])
     .filter((d) => d !== undefined);
