@@ -10,8 +10,9 @@ export function criarListaChamadaFromApi(apiResponse) {
   return lista.map((item) => ({
     alunoId: item.alunoId ?? item.id,
     nome: item.nome ?? item.nomeCompleto ?? "",
-    presente: !!item.presente,
+    presente: item.presente ?? null,
     ehInadimplente: !!(item.ehInadimplente ?? item.EhInadimplente),
+    ehReposicao: !!(item.ehReposicao ?? item.EhReposicao),
   }));
 }
 
