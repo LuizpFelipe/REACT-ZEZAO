@@ -169,6 +169,7 @@ export default function Professores() {
               <tr>
                 <th>Nome</th>
                 <th>Telefone</th>
+                <th>Usuário</th>
                 <th>E-mail</th>
                 <th>Ação</th>
               </tr>
@@ -178,6 +179,7 @@ export default function Professores() {
                 <tr key={prof.id}>
                   <td>{prof.nome}</td>
                   <td className="mono">{prof.telefone}</td>
+                  <td className="mono">{prof.nomeUsuario || "—"}</td>
                   <td className="mono">{prof.email || "—"}</td>
                   <td style={{ display: "flex", gap: 8 }}>
                     <Button variant="outline" size="sm" onClick={() => abrirEdicao(prof)}>
@@ -194,7 +196,7 @@ export default function Professores() {
               ))}
               {professores.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="helper-text">
+                  <td colSpan={5} className="helper-text">
                     Nenhum professor cadastrado ainda.
                   </td>
                 </tr>
