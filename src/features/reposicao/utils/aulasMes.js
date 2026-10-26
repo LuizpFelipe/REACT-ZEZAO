@@ -19,6 +19,13 @@ export function parseDiasSemana(diasSemanaStr) {
     .filter((d) => d !== undefined);
 }
 
+export function turmaTemAulaEm(turma, dataIso) {
+  const [ano, mes, dia] = (dataIso ?? "").split("T")[0].split("-").map(Number);
+  if (!ano || !mes || !dia) return true;
+  const diaDaSemana = new Date(ano, mes - 1, dia).getDay();
+  return parseDiasSemana(turma?.diasSemana).includes(diaDaSemana);
+}
+
 export function parseHorario(horarioStr) {
   const match = /(\d{1,2})h(\d{2})?/.exec(horarioStr ?? "");
   if (!match) return { hora: 0, minuto: 0 };
