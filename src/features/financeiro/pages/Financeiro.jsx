@@ -4,7 +4,13 @@ import Button from "@shared/components/Button/Button";
 import Select from "@shared/components/Select/Select";
 import Loading from "@shared/components/Loading/Loading";
 import { darBaixaParcela, dispararCobranca, listarParcelas, listarResumoFinanceiro } from "../services/financeiroService";
+import { converterDataIsoParaBr } from "@shared/utils/data";
 import "@shared/shared.css";
+
+function formatarMoeda(valor) {
+  if (typeof valor !== "number") return valor ?? "—";
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 const RESUMO_VAZIO = { recebidoMes: "—", pendente: "—", inadimplencia: "—" };
 
@@ -84,9 +90,9 @@ export default function Financeiro() {
   return (
     <div>
       <div className="stats-row">
-        <div className="stat-card"><div className="label">Recebido no mês</div><div className="value">{resumo.recebidoMes}</div></div>
-        <div className="stat-card accent"><div className="label">Pendente</div><div className="value">{resumo.pendente}</div></div>
-        <div className="stat-card warn"><div className="label">Inadimplência</div><div className="value">{resumo.inadimplencia}</div></div>
+        <div className="stat-card"><div className="label">Recebido no mês</div><div className="value">{formatarMoeda(resumo.recebidoMes)}</div></div>
+        <div className="stat-card accent"><div className="label">Pendente</div><div className="value">{formatarMoeda(resumo.pendente)}</div></div>
+        <div className="stat-card warn"><div className="label">Inadimplência</div><div className="value">{formatarMoeda(resumo.inadimplencia)}</div></div>
       </div>
       <div className="card">
         <div className="table-toolbar">
@@ -113,8 +119,8 @@ export default function Financeiro() {
                 {parcelas.map((p) => (
                   <tr key={p.id}>
                     <td>{p.status === "Atrasado" ? (<span className="name-flag"><span className="flag-dot" />{p.aluno}</span>) : p.aluno}</td>
-                    <td className="mono">{p.vencimento}</td>
-                    <td className="mono">{p.valor}</td>
+                    <td className="mono">{converterDataIsoParaBr(p.vencimento)}</td>
+                    <td className="mono">{formatarMoeda(p.valor)}</td>
                     <td><StatusBadge status={p.status} /></td>
                     <td>
                       {p.status === "Pago" ? (
