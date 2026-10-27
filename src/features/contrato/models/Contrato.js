@@ -9,6 +9,7 @@ export function criarContratoFromApi(apiResponse) {
   return {
     id: apiResponse.id,
     alunoId: apiResponse.alunoId,
+    alunoNome: apiResponse.alunoNome ?? "",
     dataInicio: apiResponse.dataInicio,
     dataFim: apiResponse.dataFim,
     valorParcela: apiResponse.valorParcela,
