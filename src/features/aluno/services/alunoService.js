@@ -24,6 +24,7 @@ export async function criarAluno(dados) {
   formData.append("Telefone", dados.telefone);
   formData.append("Endereco", dados.endereco);
   formData.append("TurmaId", dados.turmaId);
+  formData.append("Posicao", dados.posicao);
   if (dados.foto) {
     formData.append("foto", dados.foto);
   }
@@ -43,6 +44,14 @@ export async function criarAluno(dados) {
 }
 
 export async function atualizarCpfDoResponsavel(aluno, responsavelCpf) {
+  return atualizarAluno(aluno, { responsavelCpf });
+}
+
+export async function atualizarPosicaoDoAluno(aluno, posicao) {
+  return atualizarAluno(aluno, { responsavelCpf: aluno.responsavelCpf, posicao });
+}
+
+async function atualizarAluno(aluno, { responsavelCpf, posicao }) {
   const formData = new FormData();
   formData.append("NomeCompleto", aluno.nome);
   formData.append("DataNascimento", aluno.dataNascimento.split("T")[0]);
@@ -52,6 +61,10 @@ export async function atualizarCpfDoResponsavel(aluno, responsavelCpf) {
   formData.append("Telefone", aluno.telefone);
   formData.append("Endereco", aluno.endereco);
   formData.append("TurmaId", aluno.turmaId);
+  const posicaoFinal = posicao ?? aluno.posicao;
+  if (posicaoFinal !== null && posicaoFinal !== undefined) {
+    formData.append("Posicao", posicaoFinal);
+  }
   if (aluno.fotoUrl) {
     formData.append("FotoUrl", aluno.fotoUrl);
   }
