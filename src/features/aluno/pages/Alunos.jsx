@@ -5,7 +5,8 @@ import Modal from "@shared/components/Modal/Modal";
 import Select from "@shared/components/Select/Select";
 import Input from "@shared/components/Input/Input";
 import Button from "@shared/components/Button/Button";
-import { listarAlunos, atualizarCpfDoResponsavel } from "../services/alunoService";
+import { listarAlunos, atualizarCpfDoResponsavel, atualizarPosicaoDoAluno } from "../services/alunoService";
+import { POSICOES } from "../models/Posicao";
 import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { registrarRemanejamento } from "@features/reposicao/services/reposicaoService";
@@ -133,6 +134,16 @@ export default function Alunos() {
     setAlunoEditandoCpf(null);
   }
 
+  async function alterarPosicao(aluno, valor) {
+    try {
+      await atualizarPosicaoDoAluno(aluno, Number(valor));
+      setAlunos(await listarAlunos());
+      setMensagem({ tipo: "sucesso", texto: `Posição de ${aluno.nome} atualizada.` });
+    } catch (err) {
+      setMensagem({ tipo: "erro", texto: err.message || "Não foi possível atualizar a posição." });
+    }
+  }
+
   async function confirmarEdicaoDoCpf(event) {
     event.preventDefault();
     const mensagemDoCpf = validarCpfDoResponsavel(cpfEmEdicao);
@@ -255,6 +266,7 @@ export default function Alunos() {
                 <th>Aluno</th>
                 {turmaFiltro === "todas" && <th>Turma</th>}
                 <th>Nível</th>
+                <th>Posição</th>
                 <th>Status</th>
                 <th>Ação</th>
               </tr>
@@ -275,6 +287,16 @@ export default function Alunos() {
                   {turmaFiltro === "todas" && <td>{nomeTurma(aluno.turmaId)}</td>}
                   <td>{aluno.nivel}</td>
                   <td>
+                    <select value={aluno.posicao ?? ""} onChange={(e) => alterarPosicao(aluno, e.target.value)}>
+                      {aluno.posicao === null && <option value="">Definir…</option>}
+                      {POSICOES.map((posicao) => (
+                        <option key={posicao.value} value={posicao.value}>
+                          {posicao.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
                     <StatusBadge status={aluno.status} />
                   </td>
                   <td>
@@ -291,7 +313,7 @@ export default function Alunos() {
               ))}
               {alunosFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan={turmaFiltro === "todas" ? 5 : 4} className="helper-text">
+                  <td colSpan={turmaFiltro === "todas" ? 6 : 5} className="helper-text">
                     Nenhum aluno encontrado para esse filtro.
                   </td>
                 </tr>
