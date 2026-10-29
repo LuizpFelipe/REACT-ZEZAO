@@ -4,6 +4,7 @@ export function criarProfessorFromApi(apiResponse) {
     nome: apiResponse.nome,
     telefone: apiResponse.telefone,
     email: apiResponse.email ?? "",
+    nomeUsuario: apiResponse.nomeUsuario ?? "",
     usuarioId: apiResponse.usuarioId,
   };
 }

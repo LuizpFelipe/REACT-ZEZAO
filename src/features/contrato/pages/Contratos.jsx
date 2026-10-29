@@ -1,10 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import StatusBadge from "@shared/components/StatusBadge/StatusBadge";
 import Button from "@shared/components/Button/Button";
 import Loading from "@shared/components/Loading/Loading";
+import Select from "@shared/components/Select/Select";
 import { listarAlunos } from "@features/aluno/services/alunoService";
 import { baixarContratoPdf, cancelarContrato, listarContratos } from "../services/contratoService";
 import "@shared/shared.css";
+
+const OPCOES_STATUS = [
+  { value: "", label: "Todos os contratos" },
+  { value: "Ativo", label: "Em aberto (ativos)" },
+  { value: "Encerrado", label: "Encerrados" },
+  { value: "Cancelado", label: "Cancelados" },
+  { value: "Renovado", label: "Renovados" },
+];
 
 export default function Contratos() {
   const [contratos, setContratos] = useState([]);
@@ -12,6 +21,7 @@ export default function Contratos() {
   const [carregando, setCarregando] = useState(true);
   const [processandoId, setProcessandoId] = useState(null);
   const [avisoDoContrato, setAvisoDoContrato] = useState("");
+  const [statusFiltro, setStatusFiltro] = useState("");
 
   useEffect(() => {
     carregar();
@@ -35,9 +45,14 @@ export default function Contratos() {
     }
   }
 
-  function nomeDoAluno(alunoId) {
-    return alunos.find((a) => a.id === alunoId)?.nome ?? "—";
+  function nomeDoAluno(contrato) {
+    return contrato.alunoNome || alunos.find((a) => a.id === contrato.alunoId)?.nome || "—";
   }
+
+  const contratosFiltrados = useMemo(
+    () => (statusFiltro ? contratos.filter((c) => c.status === statusFiltro) : contratos),
+    [contratos, statusFiltro]
+  );
 
   async function handleBaixarPdf(contratoId) {
     setProcessandoId(contratoId);
@@ -80,14 +95,24 @@ export default function Contratos() {
 
   return (
     <div className="card">
-      <h3><span className="dot" /> Contratos</h3>
+      <div className="table-toolbar">
+        <h3 style={{ margin: 0 }}><span className="dot" /> Contratos</h3>
+        <Select
+          id="filtro-status-contrato"
+          options={OPCOES_STATUS}
+          value={statusFiltro}
+          onChange={(e) => setStatusFiltro(e.target.value)}
+        />
+      </div>
       {avisoDoContrato && (
         <p className="helper-text" style={{ color: "var(--red-ink)" }}>
           {avisoDoContrato}
         </p>
       )}
-      {contratos.length === 0 ? (
-        <p className="helper-text">Nenhum contrato encontrado.</p>
+      {contratosFiltrados.length === 0 ? (
+        <p className="helper-text">
+          {contratos.length === 0 ? "Nenhum contrato encontrado." : "Nenhum contrato com este status."}
+        </p>
       ) : (
         <div className="table-scroll">
           <table className="data-table">
@@ -103,9 +128,9 @@ export default function Contratos() {
               </tr>
             </thead>
             <tbody>
-              {contratos.map((c) => (
+              {contratosFiltrados.map((c) => (
                 <tr key={c.id}>
-                  <td>{nomeDoAluno(c.alunoId)}</td>
+                  <td>{nomeDoAluno(c)}</td>
                   <td className="mono">{c.dataInicio}</td>
                   <td className="mono">{c.dataFim}</td>
                   <td className="mono">{c.valorParcela}</td>

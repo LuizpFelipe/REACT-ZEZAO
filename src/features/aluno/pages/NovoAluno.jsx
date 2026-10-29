@@ -6,6 +6,7 @@ import Loading from "@shared/components/Loading/Loading";
 import { criarAluno } from "../services/alunoService";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
+import { POSICOES } from "../models/Posicao";
 import { converterDataBrParaIso } from "@shared/utils/data";
 import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
 import "@shared/shared.css";
@@ -21,6 +22,7 @@ const FORM_INICIAL = {
   dataNascimento: "",
   nivelTecnico: NIVEIS_TECNICOS[0].value,
   turmaId: "",
+  posicao: "",
   responsavel: "",
   responsavelCpf: "",
   telefone: "",
@@ -122,6 +124,11 @@ export default function NovoAluno() {
       return;
     }
 
+    if (form.posicao === "") {
+      setMensagem({ tipo: "erro", texto: "Selecione a posição em que o aluno joga." });
+      return;
+    }
+
     setEnviando(true);
     try {
       await criarAluno({
@@ -133,6 +140,7 @@ export default function NovoAluno() {
         telefone: form.telefone,
         endereco: form.endereco,
         turmaId: form.turmaId,
+        posicao: form.posicao,
         foto: form.foto,
       });
       setMensagem({ tipo: "sucesso", texto: "Aluno cadastrado com sucesso." });
@@ -281,6 +289,15 @@ export default function NovoAluno() {
               options={NIVEIS_TECNICOS}
               value={form.nivelTecnico}
               onChange={(e) => atualizarCampo("nivelTecnico", e.target.value)}
+            />
+          </div>
+          <div className="form-row full">
+            <Select
+              id="posicao"
+              label="Posição em que joga"
+              options={[{ value: "", label: "Selecione a posição" }, ...POSICOES.map((p) => ({ value: p.value, label: p.label }))]}
+              value={form.posicao}
+              onChange={(e) => atualizarCampo("posicao", e.target.value)}
             />
           </div>
           <div className="form-row full">

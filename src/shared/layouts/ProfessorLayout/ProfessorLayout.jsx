@@ -33,14 +33,10 @@ export default function ProfessorLayout() {
         </div>
 
         <div className="coord-top-tabs">
-          {podeVerCoordenacao ? (
+          {podeVerCoordenacao && (
             <Link to="/coordenacao" className="top-tab">
               Coordenação
             </Link>
-          ) : (
-            <button className="top-tab" disabled>
-              Coordenação
-            </button>
           )}
           <button className="top-tab top-tab--active" disabled>
             Professor

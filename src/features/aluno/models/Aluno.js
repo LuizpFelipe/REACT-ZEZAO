@@ -15,5 +15,6 @@ export function criarAlunoFromApi(apiResponse) {
     telefone: apiResponse.telefone,
     endereco: apiResponse.endereco,
     fotoUrl: apiResponse.fotoUrl ?? null,
+    posicao: apiResponse.posicao ?? null,
   };
 }

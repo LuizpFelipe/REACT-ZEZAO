@@ -4,6 +4,7 @@ import Loading from "@shared/components/Loading/Loading";
 import Input from "@shared/components/Input/Input";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { converterDataIsoParaBr, obterDataLocalIso } from "@shared/utils/data";
+import { turmaTemAulaEm } from "@features/reposicao/utils/aulasMes";
 import { registrarChamada, obterChamadaPorTurmaEData } from "../services/presencaService";
 import "@shared/shared.css";
 import "./Chamada.css";
@@ -31,7 +32,14 @@ export default function Chamada() {
   }, [turmaId]);
 
   useEffect(() => {
-    if (turma) carregarChamada();
+    if (!turma) return;
+
+    if (!turmaTemAulaEm(turma, dataAula)) {
+      navigate(`/professor?data=${dataAula}`, { replace: true });
+      return;
+    }
+
+    carregarChamada();
   }, [turma, dataAula]);
 
   async function carregarTurma() {
@@ -58,7 +66,7 @@ export default function Chamada() {
     setAvisoDaData("");
     try {
       const chamada = await obterChamadaPorTurmaEData(turmaId, dataAula);
-      setAlunos(chamada.alunos);
+      setAlunos(chamada.alunos.map((aluno) => ({ ...aluno, presente: aluno.presente ?? true })));
       setPodeEditar(chamada.podeEditar);
       if (!chamada.podeEditar) {
         setAvisoDaData(
@@ -77,11 +85,19 @@ export default function Chamada() {
 
   function alterarData(novaData) {
     if (!novaData) return;
+
+    if (turma && !turmaTemAulaEm(turma, novaData)) {
+      navigate(`/professor?data=${novaData}`);
+      return;
+    }
+
     setParametrosDaUrl({ data: novaData }, { replace: true });
   }
 
-  function marcarAluno(alunoId, presente) {
-    setAlunos((atual) => atual.map((aluno) => (aluno.alunoId === alunoId ? { ...aluno, presente } : aluno)));
+  function alternarPresenca(alunoId) {
+    setAlunos((atual) =>
+      atual.map((aluno) => (aluno.alunoId === alunoId ? { ...aluno, presente: !aluno.presente } : aluno))
+    );
   }
 
   function marcarTodos(presente) {
@@ -94,7 +110,7 @@ export default function Chamada() {
     try {
       const listaPresencas = alunos.map((aluno) => ({
         alunoId: aluno.alunoId,
-        presente: aluno.presente === true,
+        presente: !!aluno.presente,
       }));
       await registrarChamada(turmaId, dataAula, listaPresencas);
       setMensagem({ tipo: "sucesso", texto: "Chamada salva com sucesso." });
@@ -130,9 +146,8 @@ export default function Chamada() {
   }
 
   const quantidadeInadimplentes = alunos.filter((aluno) => aluno.ehInadimplente).length;
-  const quantidadePresentes = alunos.filter((aluno) => aluno.presente === true).length;
-  const quantidadeFaltas = alunos.filter((aluno) => aluno.presente === false).length;
-  const quantidadePendentes = alunos.length - quantidadePresentes - quantidadeFaltas;
+  const quantidadePresentes = alunos.filter((aluno) => aluno.presente).length;
+  const quantidadeFaltas = alunos.length - quantidadePresentes;
 
   return (
     <>
@@ -203,8 +218,7 @@ export default function Chamada() {
               </button>
               <span className="helper-text" style={{ margin: 0, alignSelf: "center" }}>
                 C: <b style={{ color: "var(--ink)" }}>{quantidadePresentes}</b> · F:{" "}
-                <b style={{ color: "var(--ink)" }}>{quantidadeFaltas}</b> · Sem marcação:{" "}
-                <b style={{ color: "var(--ink)" }}>{quantidadePendentes}</b>
+                <b style={{ color: "var(--ink)" }}>{quantidadeFaltas}</b>
               </span>
             </div>
 
@@ -243,28 +257,16 @@ export default function Chamada() {
                         </div>
                       </td>
                       <td style={{ textAlign: "center" }}>
-                        <div className="marcacao-grupo" role="group" aria-label={`Presença de ${aluno.nome}`}>
-                          <button
-                            type="button"
-                            className={`marcacao-botao marcacao-botao--compareceu${aluno.presente === true ? " marcacao-botao--ativo" : ""}`}
-                            aria-pressed={aluno.presente === true}
-                            aria-label={`${aluno.nome} compareceu`}
-                            disabled={!podeEditar}
-                            onClick={() => marcarAluno(aluno.alunoId, true)}
-                          >
-                            C
-                          </button>
-                          <button
-                            type="button"
-                            className={`marcacao-botao marcacao-botao--faltou${aluno.presente === false ? " marcacao-botao--ativo" : ""}`}
-                            aria-pressed={aluno.presente === false}
-                            aria-label={`${aluno.nome} faltou`}
-                            disabled={!podeEditar}
-                            onClick={() => marcarAluno(aluno.alunoId, false)}
-                          >
-                            F
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          className={`marcacao-botao ${aluno.presente ? "marcacao-botao--compareceu" : "marcacao-botao--faltou"} marcacao-botao--ativo`}
+                          aria-label={`${aluno.nome}: ${aluno.presente ? "compareceu" : "faltou"}. Clique para alternar.`}
+                          title="Clique para alternar entre C (compareceu) e F (faltou)"
+                          disabled={!podeEditar}
+                          onClick={() => alternarPresenca(aluno.alunoId)}
+                        >
+                          {aluno.presente ? "C" : "F"}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -282,8 +284,7 @@ export default function Chamada() {
         <button
           className="btn btn-primary"
           onClick={handleSalvar}
-          disabled={salvando || alunos.length === 0 || !podeEditar || quantidadePendentes > 0}
-          title={quantidadePendentes > 0 ? "Marque todos os alunos antes de salvar." : undefined}
+          disabled={salvando || alunos.length === 0 || !podeEditar}
         >
           {salvando ? "Salvando..." : "Salvar Chamada"}
         </button>
