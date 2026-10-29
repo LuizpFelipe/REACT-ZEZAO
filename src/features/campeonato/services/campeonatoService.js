@@ -98,19 +98,19 @@ export async function listarEquipes(campeonatoId) {
   return corpo.data ?? [];
 }
 
-export async function criarEquipe(campeonatoId, { nome, alunoIds }) {
+export async function criarEquipe(campeonatoId, { nome, alunoIds, modoLivre = false }) {
   const corpo = await chamar(
     `${API_URL}/Campeonatos/${campeonatoId}/equipes`,
-    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ nome: nome || null, alunoIds }) },
+    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ nome: nome || null, alunoIds, modoLivre }) },
     "Não foi possível criar o time."
   );
   return corpo.data;
 }
 
-export async function sortearEquipes(campeonatoId, quantidade) {
+export async function sortearEquipes(campeonatoId, quantidade, incluirTodos = false) {
   const corpo = await chamar(
     `${API_URL}/Campeonatos/${campeonatoId}/equipes/aleatorias`,
-    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ quantidade: quantidade || null }) },
+    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ quantidade: quantidade || null, incluirTodos }) },
     "Não foi possível sortear os times."
   );
   return { equipes: corpo.data ?? [], mensagem: corpo.message };
