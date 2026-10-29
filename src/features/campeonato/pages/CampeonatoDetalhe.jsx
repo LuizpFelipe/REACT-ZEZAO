@@ -69,6 +69,8 @@ export default function CampeonatoDetalhe() {
   const [escolhas, setEscolhas] = useState({});
   const [nomeDoTime, setNomeDoTime] = useState("");
   const [quantidadeDeTimes, setQuantidadeDeTimes] = useState("");
+  const [modoLivre, setModoLivre] = useState(false);
+  const [selecionadosNoModoLivre, setSelecionadosNoModoLivre] = useState([]);
 
   const [jogoAberto, setJogoAberto] = useState(null);
   const [estatisticas, setEstatisticas] = useState(null);
@@ -160,25 +162,49 @@ export default function CampeonatoDetalhe() {
 
   function handleCriarTime(event) {
     event.preventDefault();
-    const alunoIds = POSICOES.map((p) => escolhas[p.label]).filter(Boolean);
-    if (alunoIds.length !== POSICOES.length) {
+    const alunoIds = modoLivre ? selecionadosNoModoLivre : POSICOES.map((p) => escolhas[p.label]).filter(Boolean);
+    if (!modoLivre && alunoIds.length !== POSICOES.length) {
       setMensagem({ tipo: "erro", texto: "Escolha um aluno para cada posição." });
       return;
     }
+    if (modoLivre && (alunoIds.length < 5 || alunoIds.length > 8)) {
+      setMensagem({ tipo: "erro", texto: "No modo livre, selecione de 5 a 8 alunos." });
+      return;
+    }
     executar(async () => {
-      await criarEquipe(campeonatoId, { nome: nomeDoTime.trim(), alunoIds });
+      await criarEquipe(campeonatoId, { nome: nomeDoTime.trim(), alunoIds, modoLivre });
       setEscolhas({});
+      setSelecionadosNoModoLivre([]);
       setNomeDoTime("");
     }, "Time criado.");
   }
 
-  function handleSortear() {
+  async function handleSortear() {
     const quantidade = quantidadeDeTimes === "" ? null : Number(quantidadeDeTimes);
-    executar(async () => {
-      const resultado = await sortearEquipes(campeonatoId, quantidade);
+    setOcupado(true);
+    setMensagem(null);
+    try {
+      let resultado;
+      try {
+        resultado = await sortearEquipes(campeonatoId, quantidade, false);
+      } catch (err) {
+        const querMontarMesmoAssim = window.confirm(
+          `${err.message}\n\nDeseja montar os times mesmo assim? Jogadores de outras posições vão completar as vagas que faltam, e quem sobrar entra como reserva.`
+        );
+        if (!querMontarMesmoAssim) {
+          setMensagem({ tipo: "erro", texto: err.message });
+          return;
+        }
+        resultado = await sortearEquipes(campeonatoId, quantidade, true);
+      }
       setQuantidadeDeTimes("");
-      return resultado.mensagem;
-    });
+      await carregar();
+      setMensagem({ tipo: "sucesso", texto: resultado.mensagem || "Times sorteados." });
+    } catch (err) {
+      setMensagem({ tipo: "erro", texto: err.message || "Não foi possível sortear os times." });
+    } finally {
+      setOcupado(false);
+    }
   }
 
   function handleRemoverTime(equipe) {
@@ -423,6 +449,9 @@ export default function CampeonatoDetalhe() {
                     Sortear times
                   </Button>
                 </div>
+                <p className="helper-text">
+                  Se faltar aluno em alguma posição, o sistema avisa e você pode montar os times mesmo assim. Quem sobrar entra como reserva em algum time.
+                </p>
 
                 <h4 style={{ margin: "18px 0 6px" }}>Montar um time</h4>
                 <form onSubmit={handleCriarTime}>
@@ -434,7 +463,26 @@ export default function CampeonatoDetalhe() {
                     value={nomeDoTime}
                     onChange={(e) => setNomeDoTime(e.target.value)}
                   />
-                  {POSICOES.map((posicao) => (
+                  <label style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0" }}>
+                    <input type="checkbox" checked={modoLivre} onChange={(e) => setModoLivre(e.target.checked)} />
+                    Modo livre (escolher de 5 a 8 alunos, sem exigir uma posição de cada)
+                  </label>
+                  {modoLivre &&
+                    semTime.map((p) => (
+                      <label key={p.id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "2px 0" }}>
+                        <input
+                          type="checkbox"
+                          checked={selecionadosNoModoLivre.includes(p.alunoId)}
+                          onChange={(e) =>
+                            setSelecionadosNoModoLivre((atual) =>
+                              e.target.checked ? [...atual, p.alunoId] : atual.filter((id) => id !== p.alunoId)
+                            )
+                          }
+                        />
+                        {p.nomeAluno} <span className="tag">{p.posicaoDeJogo}</span>
+                      </label>
+                    ))}
+                  {!modoLivre && POSICOES.map((posicao) => (
                     <Select
                       key={posicao.value}
                       id={`posicao-${posicao.value}`}
