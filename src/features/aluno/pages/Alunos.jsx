@@ -5,9 +5,10 @@ import Modal from "@shared/components/Modal/Modal";
 import Select from "@shared/components/Select/Select";
 import Input from "@shared/components/Input/Input";
 import Button from "@shared/components/Button/Button";
-import { listarAlunos, atualizarCpfDoResponsavel, atualizarPosicaoDoAluno } from "../services/alunoService";
+import { listarAlunos, atualizarDadosDoAluno, atualizarPosicaoDoAluno } from "../services/alunoService";
 import { POSICOES } from "../models/Posicao";
 import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
+import { formatarTelefone, validarTelefone } from "@shared/utils/telefone";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { registrarRemanejamento } from "@features/reposicao/services/reposicaoService";
 import {
@@ -19,6 +20,12 @@ import {
 import "@shared/shared.css";
 
 const HORAS_MINIMAS_AVISO = 24;
+
+const NIVEIS_TECNICOS = [
+  { value: "Iniciante", label: "Iniciante" },
+  { value: "Intermediario", label: "Intermediário" },
+  { value: "Avancado", label: "Avançado" },
+];
 
 function iniciais(nome) {
   return (nome || "")
@@ -44,10 +51,10 @@ export default function Alunos() {
   const [enviandoRemanejamento, setEnviandoRemanejamento] = useState(false);
   const [erroModal, setErroModal] = useState("");
 
-  const [alunoEditandoCpf, setAlunoEditandoCpf] = useState(null);
-  const [cpfEmEdicao, setCpfEmEdicao] = useState("");
-  const [salvandoCpf, setSalvandoCpf] = useState(false);
-  const [erroCpf, setErroCpf] = useState("");
+  const [alunoEditando, setAlunoEditando] = useState(null);
+  const [formularioDeEdicao, setFormularioDeEdicao] = useState(null);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [erroEdicao, setErroEdicao] = useState("");
 
   const agora = useMemo(() => new Date(), []);
   const limiteAviso = useMemo(() => new Date(agora.getTime() + HORAS_MINIMAS_AVISO * 60 * 60 * 1000), [agora]);
@@ -124,14 +131,39 @@ export default function Alunos() {
     setAlunoRemanejando(null);
   }
 
-  function abrirEdicaoDoCpf(aluno) {
-    setAlunoEditandoCpf(aluno);
-    setCpfEmEdicao(formatarCpf(aluno.responsavelCpf));
-    setErroCpf("");
+  function abrirEdicaoDoAluno(aluno) {
+    setAlunoEditando(aluno);
+    setFormularioDeEdicao({
+      nome: aluno.nome,
+      nivel: aluno.nivel,
+      posicao: aluno.posicao ?? "",
+      responsavelNome: aluno.responsavelNome,
+      responsavelCpf: formatarCpf(aluno.responsavelCpf),
+      telefone: formatarTelefone(aluno.telefone),
+      endereco: aluno.endereco ?? "",
+    });
+    setErroEdicao("");
   }
 
-  function fecharEdicaoDoCpf() {
-    setAlunoEditandoCpf(null);
+  function fecharEdicaoDoAluno() {
+    setAlunoEditando(null);
+    setFormularioDeEdicao(null);
+  }
+
+  function alterarCampoDaEdicao(campo, valor) {
+    setFormularioDeEdicao((anterior) => ({ ...anterior, [campo]: valor }));
+    setErroEdicao("");
+  }
+
+  function validarEdicaoDoAluno(formulario) {
+    if (formulario.nome.trim().length < 3) return "Informe o nome completo do aluno.";
+    if (!formulario.responsavelNome.trim()) return "Informe o nome do responsável.";
+    const mensagemDoCpf = validarCpfDoResponsavel(formulario.responsavelCpf);
+    if (mensagemDoCpf) return mensagemDoCpf;
+    const mensagemDoTelefone = validarTelefone(formulario.telefone);
+    if (mensagemDoTelefone) return mensagemDoTelefone;
+    if (!formulario.endereco.trim()) return "Informe o endereço.";
+    return null;
   }
 
   async function alterarPosicao(aluno, valor) {
@@ -144,24 +176,32 @@ export default function Alunos() {
     }
   }
 
-  async function confirmarEdicaoDoCpf(event) {
+  async function confirmarEdicaoDoAluno(event) {
     event.preventDefault();
-    const mensagemDoCpf = validarCpfDoResponsavel(cpfEmEdicao);
-    if (mensagemDoCpf) {
-      setErroCpf(mensagemDoCpf);
+    const mensagemDeErro = validarEdicaoDoAluno(formularioDeEdicao);
+    if (mensagemDeErro) {
+      setErroEdicao(mensagemDeErro);
       return;
     }
 
-    setSalvandoCpf(true);
+    setSalvandoEdicao(true);
     try {
-      await atualizarCpfDoResponsavel(alunoEditandoCpf, cpfEmEdicao);
+      await atualizarDadosDoAluno(alunoEditando, {
+        nome: formularioDeEdicao.nome.trim(),
+        nivel: formularioDeEdicao.nivel,
+        posicao: formularioDeEdicao.posicao === "" ? undefined : Number(formularioDeEdicao.posicao),
+        responsavelNome: formularioDeEdicao.responsavelNome.trim(),
+        responsavelCpf: formularioDeEdicao.responsavelCpf,
+        telefone: formularioDeEdicao.telefone,
+        endereco: formularioDeEdicao.endereco.trim(),
+      });
       setAlunos(await listarAlunos());
-      setMensagem({ tipo: "sucesso", texto: `CPF do responsável de ${alunoEditandoCpf.nome} atualizado.` });
-      fecharEdicaoDoCpf();
+      setMensagem({ tipo: "sucesso", texto: `Cadastro de ${formularioDeEdicao.nome.trim()} atualizado.` });
+      fecharEdicaoDoAluno();
     } catch (err) {
-      setErroCpf(err.message || "Não foi possível atualizar o CPF.");
+      setErroEdicao(err.message || "Não foi possível atualizar o cadastro.");
     } finally {
-      setSalvandoCpf(false);
+      setSalvandoEdicao(false);
     }
   }
 
@@ -304,8 +344,8 @@ export default function Alunos() {
                       <Button variant="outline" size="sm" onClick={() => abrirRemanejamento(aluno)}>
                         Repor Aula
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => abrirEdicaoDoCpf(aluno)}>
-                        CPF do responsável
+                      <Button variant="outline" size="sm" onClick={() => abrirEdicaoDoAluno(aluno)}>
+                        Editar
                       </Button>
                     </div>
                   </td>
@@ -323,36 +363,86 @@ export default function Alunos() {
         </div>
       )}
 
-      <Modal open={!!alunoEditandoCpf} title="CPF do responsável" onClose={fecharEdicaoDoCpf}>
-        {alunoEditandoCpf && (
-          <form onSubmit={confirmarEdicaoDoCpf}>
-            <p className="helper-text" style={{ marginTop: 0 }}>
-              {alunoEditandoCpf.nome} · Responsável: <b>{alunoEditandoCpf.responsavelNome}</b>
-            </p>
+      <Modal open={!!alunoEditando} title="Editar aluno" onClose={fecharEdicaoDoAluno}>
+        {alunoEditando && formularioDeEdicao && (
+          <form onSubmit={confirmarEdicaoDoAluno}>
             <div className="form-row full">
               <Input
-                id="cpfDoResponsavel"
+                id="editarNome"
+                label="Nome do aluno"
+                value={formularioDeEdicao.nome}
+                onChange={(e) => alterarCampoDaEdicao("nome", e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <Select
+                id="editarNivel"
+                label="Nível técnico"
+                options={NIVEIS_TECNICOS}
+                value={formularioDeEdicao.nivel}
+                onChange={(e) => alterarCampoDaEdicao("nivel", e.target.value)}
+              />
+              <Select
+                id="editarPosicao"
+                label="Posição"
+                options={[
+                  ...(formularioDeEdicao.posicao === "" ? [{ value: "", label: "Definir…" }] : []),
+                  ...POSICOES,
+                ]}
+                value={formularioDeEdicao.posicao}
+                onChange={(e) => alterarCampoDaEdicao("posicao", e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <Input
+                id="editarResponsavelNome"
+                label="Nome do responsável"
+                value={formularioDeEdicao.responsavelNome}
+                onChange={(e) => alterarCampoDaEdicao("responsavelNome", e.target.value)}
+              />
+              <Input
+                id="editarResponsavelCpf"
                 label="CPF do responsável"
                 placeholder="000.000.000-00"
                 inputMode="numeric"
-                value={cpfEmEdicao}
-                onChange={(e) => {
-                  setCpfEmEdicao(formatarCpf(e.target.value));
-                  setErroCpf("");
-                }}
+                maxLength={14}
+                value={formularioDeEdicao.responsavelCpf}
+                onChange={(e) => alterarCampoDaEdicao("responsavelCpf", formatarCpf(e.target.value))}
               />
             </div>
-            {erroCpf && (
-              <p className="helper-text" style={{ color: "var(--red-ink)" }}>
-                {erroCpf}
+            <div className="form-row full">
+              <Input
+                id="editarTelefone"
+                label="Telefone do responsável (recebe as cobranças)"
+                placeholder="(44) 99999-0000"
+                inputMode="tel"
+                maxLength={15}
+                value={formularioDeEdicao.telefone}
+                onChange={(e) => alterarCampoDaEdicao("telefone", formatarTelefone(e.target.value))}
+              />
+            </div>
+            <div className="form-row full">
+              <Input
+                id="editarEndereco"
+                label="Endereço"
+                value={formularioDeEdicao.endereco}
+                onChange={(e) => alterarCampoDaEdicao("endereco", e.target.value)}
+              />
+            </div>
+            <p className="helper-text">
+              Data de nascimento e turma não mudam aqui, porque definem a categoria do aluno.
+            </p>
+            {erroEdicao && (
+              <p className="helper-text" style={{ color: "var(--red-ink)" }} role="alert">
+                {erroEdicao}
               </p>
             )}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-              <Button type="button" variant="outline" onClick={fecharEdicaoDoCpf}>
+              <Button type="button" variant="outline" onClick={fecharEdicaoDoAluno}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={salvandoCpf}>
-                {salvandoCpf ? "Salvando..." : "Salvar"}
+              <Button type="submit" disabled={salvandoEdicao}>
+                {salvandoEdicao ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </form>
