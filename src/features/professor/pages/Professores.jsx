@@ -10,6 +10,7 @@ import {
   removerProfessor,
 } from "../services/professorService";
 import { resetarSenha } from "@features/usuario/services/usuarioService";
+import { formatarTelefone, validarTelefone } from "@shared/utils/telefone";
 import "@shared/shared.css";
 
 const FORM_INICIAL = { nome: "", telefone: "", email: "", nomeUsuario: "", senha: "" };
@@ -55,7 +56,7 @@ export default function Professores() {
     setEditandoId(professor.id);
     setForm({
       nome: professor.nome,
-      telefone: professor.telefone,
+      telefone: formatarTelefone(professor.telefone),
       email: professor.email ?? "",
       nomeUsuario: "",
       senha: "",
@@ -74,6 +75,11 @@ export default function Professores() {
 
     if (!form.nome || !form.telefone || !form.email) {
       setErroModal("Preencha nome, telefone e e-mail.");
+      return;
+    }
+    const mensagemDoTelefone = validarTelefone(form.telefone);
+    if (mensagemDoTelefone) {
+      setErroModal(mensagemDoTelefone);
       return;
     }
     if (!editandoId && (!form.nomeUsuario || !form.senha)) {
@@ -219,9 +225,11 @@ export default function Professores() {
             <Input
               id="telefone"
               label="Telefone"
-              placeholder="(44) 9 9999-0000"
+              placeholder="(44) 99999-0000"
+              inputMode="tel"
+              maxLength={15}
               value={form.telefone}
-              onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, telefone: formatarTelefone(e.target.value) }))}
             />
           </div>
 

@@ -7,8 +7,9 @@ import { criarAluno } from "../services/alunoService";
 import { listarTurmas } from "@features/turma/services/turmaService";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
 import { POSICOES } from "../models/Posicao";
-import { converterDataBrParaIso } from "@shared/utils/data";
+import { converterDataBrParaIso, formatarDataBr } from "@shared/utils/data";
 import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
+import { formatarTelefone, validarTelefone } from "@shared/utils/telefone";
 import "@shared/shared.css";
 
 const NIVEIS_TECNICOS = [
@@ -119,6 +120,12 @@ export default function NovoAluno() {
       return;
     }
 
+    const mensagemDoTelefone = validarTelefone(form.telefone);
+    if (mensagemDoTelefone) {
+      setMensagem({ tipo: "erro", texto: mensagemDoTelefone });
+      return;
+    }
+
     if (!form.turmaId) {
       setMensagem({ tipo: "erro", texto: "Selecione uma turma." });
       return;
@@ -224,8 +231,10 @@ export default function NovoAluno() {
               label="Data de nascimento"
               type="text"
               placeholder="dd/mm/aaaa"
+              inputMode="numeric"
+              maxLength={10}
               value={form.dataNascimento}
-              onChange={(e) => atualizarCampo("dataNascimento", e.target.value)}
+              onChange={(e) => atualizarCampo("dataNascimento", formatarDataBr(e.target.value))}
             />
           </div>
           <div className="form-row">
@@ -260,9 +269,11 @@ export default function NovoAluno() {
             <Input
               id="telefone"
               label="Telefone"
-              placeholder="(44) 9 9999-0000"
+              placeholder="(44) 99999-0000"
+              inputMode="tel"
+              maxLength={15}
               value={form.telefone}
-              onChange={(e) => atualizarCampo("telefone", e.target.value)}
+              onChange={(e) => atualizarCampo("telefone", formatarTelefone(e.target.value))}
             />
           </div>
           <div className="form-row full">
