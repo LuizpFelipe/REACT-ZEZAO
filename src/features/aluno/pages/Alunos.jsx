@@ -325,9 +325,9 @@ export default function Alunos() {
                     </div>
                   </td>
                   {turmaFiltro === "todas" && <td>{nomeTurma(aluno.turmaId)}</td>}
-                  <td>{aluno.nivel}</td>
+                  <td>{NIVEIS_TECNICOS.find((opcao) => opcao.value === aluno.nivel)?.label ?? aluno.nivel}</td>
                   <td>
-                    <select value={aluno.posicao ?? ""} onChange={(e) => alterarPosicao(aluno, e.target.value)}>
+                    <select style={{ minWidth: 130 }} value={aluno.posicao ?? ""} onChange={(e) => alterarPosicao(aluno, e.target.value)}>
                       {aluno.posicao === null && <option value="">Definir…</option>}
                       {POSICOES.map((posicao) => (
                         <option key={posicao.value} value={posicao.value}>
