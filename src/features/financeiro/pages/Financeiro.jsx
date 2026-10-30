@@ -12,6 +12,18 @@ function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Em aberto primeiro (atrasadas antes das pendentes), pagas por último; dentro do grupo, vencimento mais antigo primeiro.
+function ordenarParcelas(parcelas) {
+  const prioridade = { Atrasado: 0, Pendente: 1, Pago: 2 };
+  return [...parcelas].sort((a, b) => {
+    const diferenca = (prioridade[a.status] ?? 1) - (prioridade[b.status] ?? 1);
+    if (diferenca !== 0) return diferenca;
+    const vencimentoA = String(a.vencimento ?? a.dataVencimento ?? "");
+    const vencimentoB = String(b.vencimento ?? b.dataVencimento ?? "");
+    return a.status === "Pago" ? vencimentoB.localeCompare(vencimentoA) : vencimentoA.localeCompare(vencimentoB);
+  });
+}
+
 const RESUMO_VAZIO = { recebidoMes: "—", pendente: "—", inadimplencia: "—" };
 
 const OPCOES_STATUS = [
@@ -39,7 +51,7 @@ export default function Financeiro() {
         listarParcelas(statusFiltro ? { status: statusFiltro } : {}),
         listarResumoFinanceiro(),
       ]);
-      setParcelas(parcelasApi);
+      setParcelas(ordenarParcelas(parcelasApi));
       setResumo(resumoApi ?? RESUMO_VAZIO);
     } catch {
       setParcelas([]);

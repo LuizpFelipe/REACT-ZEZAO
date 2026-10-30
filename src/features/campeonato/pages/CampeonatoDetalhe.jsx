@@ -517,7 +517,7 @@ export default function CampeonatoDetalhe() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <strong>{equipe.nome}</strong>
                     {!jogosGerados && (
-                      <Button variant="outline" size="sm" onClick={() => handleRemoverTime(equipe)} disabled={ocupado}>
+                      <Button variant="outline" size="sm" onClick={() => handleRemoverTime(equipe)} disabled={ocupado || jogosGerados}>
                         Remover
                       </Button>
                     )}
@@ -559,7 +559,7 @@ export default function CampeonatoDetalhe() {
           ) : (
             <>
               <div style={{ marginBottom: 12 }}>
-                <Button variant="outline" size="sm" onClick={handleReiniciarJogos} disabled={ocupado}>
+                <Button variant="outline" size="sm" onClick={handleReiniciarJogos} disabled={ocupado || !!ranking?.finalizado}>
                   Refazer sorteio
                 </Button>
               </div>
