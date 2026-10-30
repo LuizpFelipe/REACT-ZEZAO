@@ -18,6 +18,8 @@ export default function Inadimplentes() {
   const [turmas, setTurmas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [disparandoId, setDisparandoId] = useState(null);
+  const [avisadosIds, setAvisadosIds] = useState(() => new Set());
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     carregar();
@@ -75,19 +77,27 @@ export default function Inadimplentes() {
         qtdParcelasAtraso: parcelas.length,
         valorTotalAberto: valorTotal > 0 ? `R$ ${valorTotal.toFixed(2).replace(".", ",")}` : "—",
         diasAtraso: diasDesde(maisAntiga?.vencimento),
-        parcelaIds: parcelas.map((p) => p.id),
+        parcelaMaisAntigaId: maisAntiga?.id,
       };
     }).sort((a, b) => b.diasAtraso - a.diasAtraso);
   }, [parcelasAtrasadas, alunos, turmas]);
 
   async function handleDisparar(inadimplente) {
+    const jaAvisado = avisadosIds.has(inadimplente.alunoId);
+    if (jaAvisado && !window.confirm(`Já foi enviado um aviso para ${inadimplente.nome} nesta sessão. Enviar novamente?`)) {
+      return;
+    }
+
     setDisparandoId(inadimplente.alunoId);
+    setFeedback(null);
     try {
-      for (const parcelaId of inadimplente.parcelaIds) {
-        await dispararCobranca(parcelaId);
-      }
+      // Uma única mensagem por aluno: cobra a parcela mais antiga em aberto,
+      // para o responsável não receber um aviso para cada parcela.
+      await dispararCobranca(inadimplente.parcelaMaisAntigaId);
+      setAvisadosIds((anteriores) => new Set(anteriores).add(inadimplente.alunoId));
+      setFeedback({ tipo: "sucesso", texto: `Aviso de cobrança enviado para o responsável de ${inadimplente.nome}.` });
     } catch (err) {
-      alert(err.message || "Não foi possível disparar o aviso.");
+      setFeedback({ tipo: "erro", texto: `${inadimplente.nome}: ${err.message || "não foi possível disparar o aviso."}` });
     } finally {
       setDisparandoId(null);
     }
@@ -106,6 +116,11 @@ export default function Inadimplentes() {
         <div className="stat-card accent"><div className="label">Parcelas em atraso</div><div className="value">{totalParcelas}</div></div>
         <div className="stat-card"><div className="label">Maior atraso</div><div className="value">{maiorAtraso > 0 ? `${maiorAtraso} dias` : "—"}</div></div>
       </div>
+      {feedback && (
+        <div className="notice" role={feedback.tipo === "erro" ? "alert" : "status"} style={{ marginTop: 0, marginBottom: 16 }}>
+          <b>{feedback.tipo === "erro" ? "Não enviado. " : "Enviado. "}</b>{feedback.texto}
+        </div>
+      )}
       <div className="card">
         <h3><span className="dot" /> Inadimplentes</h3>
         {inadimplentes.length === 0 ? (
@@ -125,7 +140,7 @@ export default function Inadimplentes() {
                     <td className="mono">{i.telefone}</td>
                     <td>
                       <Button variant="outline" size="sm" onClick={() => handleDisparar(i)} disabled={disparandoId === i.alunoId}>
-                        {disparandoId === i.alunoId ? "Enviando..." : "Enviar Aviso"}
+                        {disparandoId === i.alunoId ? "Enviando..." : avisadosIds.has(i.alunoId) ? "Aviso enviado" : "Enviar Aviso"}
                       </Button>
                     </td>
                   </tr>
