@@ -43,7 +43,8 @@ export async function dispararCobranca(parcelaId) {
     method: "POST",
   });
   if (!response.ok) {
-    throw new Error("Não foi possível disparar o aviso de cobrança.");
+    const corpo = await response.json().catch(() => null);
+    throw new Error(corpo?.message ?? corpo?.Message ?? "Não foi possível disparar o aviso de cobrança.");
   }
   return response.json().catch(() => null);
 }
