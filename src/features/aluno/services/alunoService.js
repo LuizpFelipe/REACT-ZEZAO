@@ -47,19 +47,23 @@ export async function atualizarCpfDoResponsavel(aluno, responsavelCpf) {
   return atualizarAluno(aluno, { responsavelCpf });
 }
 
+export async function atualizarDadosDoAluno(aluno, dados) {
+  return atualizarAluno(aluno, dados);
+}
+
 export async function atualizarPosicaoDoAluno(aluno, posicao) {
   return atualizarAluno(aluno, { responsavelCpf: aluno.responsavelCpf, posicao });
 }
 
-async function atualizarAluno(aluno, { responsavelCpf, posicao }) {
+async function atualizarAluno(aluno, { responsavelCpf, posicao, nome, nivel, responsavelNome, telefone, endereco }) {
   const formData = new FormData();
-  formData.append("NomeCompleto", aluno.nome);
+  formData.append("NomeCompleto", nome ?? aluno.nome);
   formData.append("DataNascimento", aluno.dataNascimento.split("T")[0]);
-  formData.append("NivelTecnico", aluno.nivel);
-  formData.append("ResponsavelNome", aluno.responsavelNome);
-  formData.append("ResponsavelCpf", removerMascaraCpf(responsavelCpf));
-  formData.append("Telefone", aluno.telefone);
-  formData.append("Endereco", aluno.endereco);
+  formData.append("NivelTecnico", nivel ?? aluno.nivel);
+  formData.append("ResponsavelNome", responsavelNome ?? aluno.responsavelNome);
+  formData.append("ResponsavelCpf", removerMascaraCpf(responsavelCpf ?? aluno.responsavelCpf));
+  formData.append("Telefone", telefone ?? aluno.telefone);
+  formData.append("Endereco", endereco ?? aluno.endereco);
   formData.append("TurmaId", aluno.turmaId);
   const posicaoFinal = posicao ?? aluno.posicao;
   if (posicaoFinal !== null && posicaoFinal !== undefined) {
