@@ -64,6 +64,7 @@ export default function CampeonatoDetalhe() {
 
   const [mensagem, setMensagem] = useState(null);
   const [ocupado, setOcupado] = useState(false);
+  const [progressoInscricao, setProgressoInscricao] = useState("");
 
   const [alunoParaInscrever, setAlunoParaInscrever] = useState("");
   const [escolhas, setEscolhas] = useState({});
@@ -150,8 +151,13 @@ export default function CampeonatoDetalhe() {
 
   function handleInscreverTodos() {
     executar(async () => {
-      for (const aluno of elegiveisComPosicao) {
-        await inscreverAluno(campeonatoId, { alunoId: aluno.alunoId });
+      try {
+        for (const [indice, aluno] of elegiveisComPosicao.entries()) {
+          setProgressoInscricao(`${indice + 1} de ${elegiveisComPosicao.length}`);
+          await inscreverAluno(campeonatoId, { alunoId: aluno.alunoId });
+        }
+      } finally {
+        setProgressoInscricao("");
       }
     }, `${elegiveisComPosicao.length} aluno(s) inscrito(s).`);
   }
@@ -373,7 +379,7 @@ export default function CampeonatoDetalhe() {
                   Inscrever
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleInscreverTodos} disabled={ocupado || elegiveisComPosicao.length === 0}>
-                  Inscrever todos ({elegiveisComPosicao.length})
+                  {progressoInscricao ? `Inscrevendo ${progressoInscricao}...` : `Inscrever todos (${elegiveisComPosicao.length})`}
                 </Button>
               </form>
               <p className="helper-text">
