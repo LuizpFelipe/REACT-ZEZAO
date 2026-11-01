@@ -136,13 +136,15 @@ export default function Categorias() {
                   <td>
                     {cat.idadeMin === cat.idadeMax ? `${cat.idadeMin} anos` : `${cat.idadeMin}–${cat.idadeMax} anos`}
                   </td>
-                  <td style={{ display: "flex", gap: 8 }}>
+                  <td>
+                    <div className="acoes-da-linha">
                     <Button variant="outline" size="sm" onClick={() => abrirEdicao(cat)}>
                       Editar
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleRemover(cat)}>
                       Remover
                     </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

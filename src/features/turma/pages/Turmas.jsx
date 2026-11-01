@@ -257,7 +257,8 @@ export default function Turmas() {
                   </td>
                   <td>{nomeCategoria(turma.categoriaId)}</td>
                   <td>{nomeProfessor(turma.professorId)}</td>
-                  <td style={{ display: "flex", gap: 8 }}>
+                  <td>
+                    <div className="acoes-da-linha">
                     <Button variant="outline" size="sm" onClick={() => abrirEdicao(turma)}>
                       Editar
                     </Button>
@@ -267,6 +268,7 @@ export default function Turmas() {
                     <Button variant="outline" size="sm" onClick={() => handleRemover(turma)}>
                       Remover
                     </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
