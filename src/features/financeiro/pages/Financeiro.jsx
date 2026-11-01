@@ -42,6 +42,7 @@ export default function Financeiro() {
   const [carregando, setCarregando] = useState(true);
   const [disparando, setDisparando] = useState(false);
   const [processandoId, setProcessandoId] = useState(null);
+  const [avisoDeBaixa, setAvisoDeBaixa] = useState(null);
   const [limiteDeLinhas, setLimiteDeLinhas] = useState(LINHAS_POR_PAGINA);
   useEffect(() => {
     carregar();
@@ -97,7 +98,19 @@ export default function Financeiro() {
   async function handleDarBaixa(parcelaId) {
     setProcessandoId(parcelaId);
     try {
+      const parcelaPaga = parcelas.find((p) => p.id === parcelaId);
+      const restantesEmAtraso = parcelaPaga
+        ? parcelas.filter((p) => p.alunoId === parcelaPaga.alunoId && p.id !== parcelaId && p.status === "Atrasado").length
+        : 0;
       await darBaixaParcela(parcelaId);
+      if (parcelaPaga) {
+        const vencimento = parcelaPaga.vencimento ? converterDataIsoParaBr(parcelaPaga.vencimento) : "";
+        setAvisoDeBaixa(
+          restantesEmAtraso > 0
+            ? `Parcela de ${vencimento} de ${parcelaPaga.aluno} paga. Ele ainda tem ${restantesEmAtraso} parcela(s) em atraso, por isso continua na lista de atrasados.`
+            : `Parcela de ${vencimento} de ${parcelaPaga.aluno} paga. Ele não tem mais parcelas em atraso.`
+        );
+      }
       await carregar();
     } catch (err) {
       alert(err.message || "Não foi possível dar baixa na parcela.");
@@ -128,6 +141,9 @@ export default function Financeiro() {
             </Button>
           </div>
         </div>
+        {avisoDeBaixa && (
+          <p className="helper-text" style={{ color: "var(--green-ink)" }}>{avisoDeBaixa}</p>
+        )}
         {carregando ? <Loading label="Carregando parcelas..." /> : parcelas.length === 0 ? (
           <p className="helper-text">Nenhuma parcela encontrada.</p>
         ) : (
