@@ -187,7 +187,8 @@ export default function Professores() {
                   <td className="mono">{prof.telefone}</td>
                   <td className="mono">{prof.nomeUsuario || "—"}</td>
                   <td className="mono">{prof.email || "—"}</td>
-                  <td style={{ display: "flex", gap: 8 }}>
+                  <td>
+                    <div className="acoes-da-linha">
                     <Button variant="outline" size="sm" onClick={() => abrirEdicao(prof)}>
                       Editar
                     </Button>
@@ -197,6 +198,7 @@ export default function Professores() {
                     <Button variant="outline" size="sm" onClick={() => handleRemover(prof)}>
                       Remover
                     </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

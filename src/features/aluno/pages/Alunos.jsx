@@ -355,7 +355,7 @@ export default function Alunos() {
                     <StatusBadge status={aluno.status} />
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <div className="acoes-da-linha">
                       <Button variant="outline" size="sm" onClick={() => abrirRemanejamento(aluno)}>
                         Repor Aula
                       </Button>
