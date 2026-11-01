@@ -30,6 +30,7 @@ export function criarTurmaFromApi(apiResponse) {
     diasSemana: apiResponse.diasSemana,
     diasLegiveis: formatarDiasParaExibicao(apiResponse.diasSemana),
     horario: apiResponse.horario,
+    ativa: apiResponse.ativa ?? true,
     temAulaNaData: apiResponse.temAulaNaData ?? apiResponse.temAula ?? null,
   };
 }

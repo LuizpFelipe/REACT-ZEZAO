@@ -97,7 +97,7 @@ export default function Alunos() {
 
   const opcoesTurmaFiltro = [
     { value: "todas", label: "Todas as turmas" },
-    ...turmas.map((t) => ({ value: t.id, label: `${t.nome} — ${t.diasLegiveis} ${t.horario}` })),
+    ...turmas.map((t) => ({ value: t.id, label: `${t.nome} — ${t.diasLegiveis} ${t.horario}${t.ativa ? "" : " (inativa)"}` })),
   ];
 
   const turmaOrigemRemanejando = turmas.find((t) => t.id === alunoRemanejando?.turmaId);
@@ -110,7 +110,7 @@ export default function Alunos() {
   const destinosDisponiveis = useMemo(() => {
     if (!turmaOrigemRemanejando) return [];
     const turmasMesmaCategoria = turmas.filter(
-      (t) => t.categoriaId === turmaOrigemRemanejando.categoriaId && t.id !== turmaOrigemRemanejando.id
+      (t) => t.ativa && t.categoriaId === turmaOrigemRemanejando.categoriaId && t.id !== turmaOrigemRemanejando.id
     );
     const todos = turmasMesmaCategoria.flatMap((turma) =>
       gerarOcorrenciasDoMes(turma, ano, mes)
