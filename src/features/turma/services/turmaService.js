@@ -46,8 +46,14 @@ export async function removerTurma(id) {
   }
 }
 
-async function alterarSituacaoDaTurma(id, acao, mensagemPadrao) {
-  const response = await fetchApi(`${API_URL}/Turmas/${id}/${acao}`, { method: "PATCH" });
+async function alterarSituacaoDaTurma(id, acao, mensagemPadrao, corpoDaRequisicao = null) {
+  const response = await fetchApi(`${API_URL}/Turmas/${id}/${acao}`, {
+    method: "PATCH",
+    ...(corpoDaRequisicao && {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpoDaRequisicao),
+    }),
+  });
   const corpo = await response.json().catch(() => null);
   if (!response.ok || !corpo?.status) {
     throw new Error(corpo?.message || mensagemPadrao);
@@ -55,8 +61,8 @@ async function alterarSituacaoDaTurma(id, acao, mensagemPadrao) {
   return criarTurmaFromApi(corpo.data);
 }
 
-export function inativarTurma(id) {
-  return alterarSituacaoDaTurma(id, "inativar", "Não foi possível inativar a turma.");
+export function inativarTurma(id, turmaDestinoId = null) {
+  return alterarSituacaoDaTurma(id, "inativar", "Não foi possível inativar a turma.", { turmaDestinoId });
 }
 
 export function reativarTurma(id) {
