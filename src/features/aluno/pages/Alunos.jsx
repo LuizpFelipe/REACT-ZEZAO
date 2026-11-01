@@ -494,10 +494,13 @@ export default function Alunos() {
               <Select
                 id="aulaPerdida"
                 label="Aula perdida (dias já dados este mês)"
-                options={ocorrenciasPassadas.map((data) => ({
-                  value: paraIsoData(data),
-                  label: formatarDataHora(data),
-                }))}
+                options={[
+                  { value: "", label: "Selecione a aula perdida" },
+                  ...ocorrenciasPassadas.map((data) => ({
+                    value: paraIsoData(data),
+                    label: formatarDataHora(data),
+                  })),
+                ]}
                 value={aulaPerdida}
                 onChange={(e) => setAulaPerdida(e.target.value)}
                 disabled={ocorrenciasPassadas.length === 0}
@@ -511,10 +514,13 @@ export default function Alunos() {
               <Select
                 id="destino"
                 label="Remarcar para"
-                options={destinosDisponiveis.map((o) => ({
-                  value: `${o.turma.id}__${o.data.toISOString()}`,
-                  label: `${formatarDataHora(o.data)} — ${o.turma.nome}`,
-                }))}
+                options={[
+                  { value: "", label: "Selecione a aula de reposição" },
+                  ...destinosDisponiveis.map((o) => ({
+                    value: `${o.turma.id}__${o.data.toISOString()}`,
+                    label: `${formatarDataHora(o.data)} — ${o.turma.nome}`,
+                  })),
+                ]}
                 value={destino}
                 onChange={(e) => setDestino(e.target.value)}
                 disabled={!aulaPerdida || destinosDisponiveis.length === 0}
