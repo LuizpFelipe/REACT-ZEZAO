@@ -4,7 +4,7 @@ import Input from "@shared/components/Input/Input";
 import Select from "@shared/components/Select/Select";
 import Button from "@shared/components/Button/Button";
 import Loading from "@shared/components/Loading/Loading";
-import { listarTurmas, criarTurma, atualizarTurma, removerTurma } from "../services/turmaService";
+import { listarTurmas, criarTurma, atualizarTurma, removerTurma, inativarTurma, reativarTurma } from "../services/turmaService";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
 import { listarProfessores } from "@features/professor/services/professorService";
 import { DIAS_DA_SEMANA, converterDiasParaLista, formatarListaDeDias } from "../models/Turma";
@@ -127,6 +127,27 @@ export default function Turmas() {
     }
   }
 
+  async function handleInativar(turma) {
+    if (!window.confirm(`Inativar a turma "${turma.nome}"? Ela deixa de aparecer na chamada e em novas matrículas, mas o histórico é mantido.`)) return;
+    try {
+      await inativarTurma(turma.id);
+      setMensagem({ tipo: "sucesso", texto: `Turma "${turma.nome}" inativada.` });
+      carregar();
+    } catch (err) {
+      setMensagem({ tipo: "erro", texto: err.message || "Não foi possível inativar a turma." });
+    }
+  }
+
+  async function handleReativar(turma) {
+    try {
+      await reativarTurma(turma.id);
+      setMensagem({ tipo: "sucesso", texto: `Turma "${turma.nome}" reativada.` });
+      carregar();
+    } catch (err) {
+      setMensagem({ tipo: "erro", texto: err.message || "Não foi possível reativar a turma." });
+    }
+  }
+
   async function handleRemover(turma) {
     if (!window.confirm(`Remover a turma "${turma.nome}"?`)) return;
     try {
@@ -137,6 +158,8 @@ export default function Turmas() {
       setMensagem({ tipo: "erro", texto: err.message || "Não foi possível remover a turma." });
     }
   }
+
+  const turmasOrdenadas = [...turmas].sort((a, b) => Number(b.ativa) - Number(a.ativa));
 
   const opcoesCategoria = categorias.map((c) => ({ value: c.id, label: c.nome }));
   const opcoesProfessor = professores.map((p) => ({ value: p.id, label: p.nome }));
@@ -184,9 +207,16 @@ export default function Turmas() {
               </tr>
             </thead>
             <tbody>
-              {turmas.map((turma) => (
-                <tr key={turma.id}>
-                  <td>{turma.nome}</td>
+              {turmasOrdenadas.map((turma) => (
+                <tr key={turma.id} style={turma.ativa ? undefined : { opacity: 0.6 }}>
+                  <td>
+                    {turma.nome}
+                    {!turma.ativa && (
+                      <span className="tag" style={{ marginLeft: 8 }}>
+                        INATIVA
+                      </span>
+                    )}
+                  </td>
                   <td className="mono">
                     {turma.diasLegiveis} {turma.horario}
                   </td>
@@ -196,6 +226,15 @@ export default function Turmas() {
                     <Button variant="outline" size="sm" onClick={() => abrirEdicao(turma)}>
                       Editar
                     </Button>
+                    {turma.ativa ? (
+                      <Button variant="outline" size="sm" onClick={() => handleInativar(turma)}>
+                        Inativar
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => handleReativar(turma)}>
+                        Reativar
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => handleRemover(turma)}>
                       Remover
                     </Button>
