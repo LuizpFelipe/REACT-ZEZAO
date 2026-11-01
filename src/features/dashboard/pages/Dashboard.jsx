@@ -112,9 +112,6 @@ export default function Dashboard() {
         <Stat label="Turmas" valor={totalTurmas} to="/coordenacao/turmas" />
         <Stat label="Professores" valor={totalProfessores} to="/coordenacao/professores" />
         <Stat label="Categorias" valor={totalCategorias} to="/coordenacao/categorias" />
-      </div>
-
-      <div className="stats-row">
         <Stat label="Contratos ativos" valor={contratosAtivos} to="/coordenacao/contratos" />
         <Stat label="Campeonatos agendados" valor={campeonatosAgendados} to="/campeonato" />
         <Stat label="Recebido no mês" valor={formatarMoeda(resumoFinanceiro?.recebidoMes)} to="/coordenacao/financeiro" />
