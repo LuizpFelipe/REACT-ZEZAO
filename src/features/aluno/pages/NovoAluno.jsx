@@ -86,7 +86,7 @@ export default function NovoAluno() {
   }, [form.dataNascimento, categorias]);
 
   const turmasDisponiveis = useMemo(
-    () => (categoriaDoAluno ? turmas.filter((turma) => turma.categoriaId === categoriaDoAluno.id) : []),
+    () => (categoriaDoAluno ? turmas.filter((turma) => turma.ativa && turma.categoriaId === categoriaDoAluno.id) : []),
     [turmas, categoriaDoAluno]
   );
 

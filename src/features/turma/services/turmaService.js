@@ -45,3 +45,26 @@ export async function removerTurma(id) {
     throw new Error(corpo?.message || "Não foi possível remover a turma.");
   }
 }
+
+async function alterarSituacaoDaTurma(id, acao, mensagemPadrao, corpoDaRequisicao = null) {
+  const response = await fetchApi(`${API_URL}/Turmas/${id}/${acao}`, {
+    method: "PATCH",
+    ...(corpoDaRequisicao && {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpoDaRequisicao),
+    }),
+  });
+  const corpo = await response.json().catch(() => null);
+  if (!response.ok || !corpo?.status) {
+    throw new Error(corpo?.message || mensagemPadrao);
+  }
+  return criarTurmaFromApi(corpo.data);
+}
+
+export function inativarTurma(id, turmaDestinoId = null) {
+  return alterarSituacaoDaTurma(id, "inativar", "Não foi possível inativar a turma.", { turmaDestinoId });
+}
+
+export function reativarTurma(id) {
+  return alterarSituacaoDaTurma(id, "reativar", "Não foi possível reativar a turma.");
+}

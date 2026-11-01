@@ -65,7 +65,8 @@ export default function Dashboard() {
 
   const totalAlunos = alunos?.length ?? null;
   const inadimplentes = alunos ? alunos.filter((a) => a.status === "Inadimplente").length : null;
-  const totalTurmas = turmas?.length ?? null;
+  const turmasAtivas = turmas ? turmas.filter((turma) => turma.ativa) : null;
+  const totalTurmas = turmasAtivas?.length ?? null;
   const totalProfessores = professores?.length ?? null;
   const totalCategorias = categorias?.length ?? null;
   const contratosAtivos = contratos ? contratos.filter((c) => c.status === "Ativo").length : null;
@@ -75,12 +76,12 @@ export default function Dashboard() {
 
   const alunosPorTurma = {};
   if (alunos && turmas) {
-    for (const turma of turmas) {
+    for (const turma of turmasAtivas) {
       alunosPorTurma[turma.id] = alunos.filter((a) => a.turmaId === turma.id).length;
     }
   }
-  const turmasOrdenadas = turmas
-    ? [...turmas].sort((a, b) => (alunosPorTurma[b.id] ?? 0) - (alunosPorTurma[a.id] ?? 0))
+  const turmasOrdenadas = turmasAtivas
+    ? [...turmasAtivas].sort((a, b) => (alunosPorTurma[b.id] ?? 0) - (alunosPorTurma[a.id] ?? 0))
     : [];
 
   function Stat({ label, valor, variante, to }) {
@@ -112,9 +113,6 @@ export default function Dashboard() {
         <Stat label="Turmas" valor={totalTurmas} to="/coordenacao/turmas" />
         <Stat label="Professores" valor={totalProfessores} to="/coordenacao/professores" />
         <Stat label="Categorias" valor={totalCategorias} to="/coordenacao/categorias" />
-      </div>
-
-      <div className="stats-row">
         <Stat label="Contratos ativos" valor={contratosAtivos} to="/coordenacao/contratos" />
         <Stat label="Campeonatos agendados" valor={campeonatosAgendados} to="/campeonato" />
         <Stat label="Recebido no mês" valor={formatarMoeda(resumoFinanceiro?.recebidoMes)} to="/coordenacao/financeiro" />
@@ -127,7 +125,7 @@ export default function Dashboard() {
         </h3>
         {!turmas || !alunos ? (
           <p className="helper-text">Não foi possível carregar as turmas agora.</p>
-        ) : turmas.length === 0 ? (
+        ) : turmasAtivas.length === 0 ? (
           <p className="helper-text">Nenhuma turma cadastrada ainda.</p>
         ) : (
           <div className="table-scroll">
