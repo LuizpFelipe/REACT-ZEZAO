@@ -7,6 +7,7 @@ import Loading from "@shared/components/Loading/Loading";
 import { listarTurmas, criarTurma, atualizarTurma, removerTurma, inativarTurma, reativarTurma } from "../services/turmaService";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
 import { listarProfessores } from "@features/professor/services/professorService";
+import { listarAlunos } from "@features/aluno/services/alunoService";
 import { DIAS_DA_SEMANA, converterDiasParaLista, formatarListaDeDias } from "../models/Turma";
 import "@shared/shared.css";
 
@@ -16,11 +17,17 @@ export default function Turmas() {
   const [turmas, setTurmas] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [professores, setProfessores] = useState([]);
+  const [alunos, setAlunos] = useState([]);
+  const [turmaInativando, setTurmaInativando] = useState(null);
+  const [turmaDestinoId, setTurmaDestinoId] = useState("");
+  const [inativando, setInativando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState(null);
 
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalInativasAberto, setModalInativasAberto] = useState(false);
+  const [reativandoId, setReativandoId] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
   const [form, setForm] = useState(FORM_INICIAL);
   const [enviando, setEnviando] = useState(false);
@@ -32,11 +39,12 @@ export default function Turmas() {
 
   function carregar() {
     setCarregando(true);
-    Promise.all([listarTurmas(), listarCategorias(), listarProfessores()])
-      .then(([turmasApi, categoriasApi, professoresApi]) => {
+    Promise.all([listarTurmas(), listarCategorias(), listarProfessores(), listarAlunos().catch(() => [])])
+      .then(([turmasApi, categoriasApi, professoresApi, alunosApi]) => {
         setTurmas(turmasApi);
         setCategorias(categoriasApi);
         setProfessores(professoresApi);
+        setAlunos(alunosApi);
       })
       .catch((err) => setErro(err.message || "Não foi possível carregar os dados."))
       .finally(() => setCarregando(false));
@@ -127,24 +135,52 @@ export default function Turmas() {
     }
   }
 
-  async function handleInativar(turma) {
-    if (!window.confirm(`Inativar a turma "${turma.nome}"? Ela deixa de aparecer na chamada e em novas matrículas, mas o histórico é mantido.`)) return;
+  function contarAlunosAtivos(turmaId) {
+    return alunos.filter((aluno) => aluno.turmaId === turmaId && aluno.status !== "Inativo").length;
+  }
+
+  function destinosPossiveis(turma) {
+    return turmas.filter((t) => t.ativa && t.id !== turma.id && t.categoriaId === turma.categoriaId);
+  }
+
+  async function executarInativacao(turma, destinoId) {
+    setInativando(true);
     try {
-      await inativarTurma(turma.id);
+      await inativarTurma(turma.id, destinoId || null);
       setMensagem({ tipo: "sucesso", texto: `Turma "${turma.nome}" inativada.` });
+      setTurmaInativando(null);
       carregar();
     } catch (err) {
       setMensagem({ tipo: "erro", texto: err.message || "Não foi possível inativar a turma." });
+      setTurmaInativando(null);
+    } finally {
+      setInativando(false);
     }
   }
 
+  function handleInativar(turma) {
+    if (contarAlunosAtivos(turma.id) > 0) {
+      const destinos = destinosPossiveis(turma);
+      setTurmaDestinoId(destinos[0]?.id ?? "");
+      setTurmaInativando(turma);
+      return;
+    }
+    if (!window.confirm(`Inativar a turma "${turma.nome}"? Ela deixa de aparecer na chamada e em novas matrículas, mas o histórico é mantido.`)) return;
+    executarInativacao(turma, null);
+  }
+
   async function handleReativar(turma) {
+    setReativandoId(turma.id);
     try {
       await reativarTurma(turma.id);
       setMensagem({ tipo: "sucesso", texto: `Turma "${turma.nome}" reativada.` });
+      setModalInativasAberto(false);
       carregar();
     } catch (err) {
       setMensagem({ tipo: "erro", texto: err.message || "Não foi possível reativar a turma." });
+      setModalInativasAberto(false);
+    } finally {
+      setReativandoId(null);
     }
   }
 
@@ -159,7 +195,8 @@ export default function Turmas() {
     }
   }
 
-  const turmasOrdenadas = [...turmas].sort((a, b) => Number(b.ativa) - Number(a.ativa));
+  const turmasAtivas = turmas.filter((turma) => turma.ativa);
+  const turmasInativas = turmas.filter((turma) => !turma.ativa);
 
   const opcoesCategoria = categorias.map((c) => ({ value: c.id, label: c.nome }));
   const opcoesProfessor = professores.map((p) => ({ value: p.id, label: p.nome }));
@@ -170,9 +207,14 @@ export default function Turmas() {
         <h3 style={{ margin: 0 }}>
           <span className="dot" /> Turmas
         </h3>
-        <Button size="sm" onClick={abrirNova} disabled={categorias.length === 0 || professores.length === 0}>
-          Nova Turma
-        </Button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button variant="outline" size="sm" onClick={() => setModalInativasAberto(true)} disabled={turmasInativas.length === 0}>
+            Turmas inativas ({turmasInativas.length})
+          </Button>
+          <Button size="sm" onClick={abrirNova} disabled={categorias.length === 0 || professores.length === 0}>
+            Nova Turma
+          </Button>
+        </div>
       </div>
 
       {(categorias.length === 0 || professores.length === 0) && !carregando && (
@@ -207,16 +249,9 @@ export default function Turmas() {
               </tr>
             </thead>
             <tbody>
-              {turmasOrdenadas.map((turma) => (
-                <tr key={turma.id} style={turma.ativa ? undefined : { opacity: 0.6 }}>
-                  <td>
-                    {turma.nome}
-                    {!turma.ativa && (
-                      <span className="tag" style={{ marginLeft: 8 }}>
-                        INATIVA
-                      </span>
-                    )}
-                  </td>
+              {turmasAtivas.map((turma) => (
+                <tr key={turma.id}>
+                  <td>{turma.nome}</td>
                   <td className="mono">
                     {turma.diasLegiveis} {turma.horario}
                   </td>
@@ -226,22 +261,16 @@ export default function Turmas() {
                     <Button variant="outline" size="sm" onClick={() => abrirEdicao(turma)}>
                       Editar
                     </Button>
-                    {turma.ativa ? (
-                      <Button variant="outline" size="sm" onClick={() => handleInativar(turma)}>
-                        Inativar
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" onClick={() => handleReativar(turma)}>
-                        Reativar
-                      </Button>
-                    )}
+                    <Button variant="outline" size="sm" onClick={() => handleInativar(turma)}>
+                      Inativar
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleRemover(turma)}>
                       Remover
                     </Button>
                   </td>
                 </tr>
               ))}
-              {turmas.length === 0 && (
+              {turmasAtivas.length === 0 && (
                 <tr>
                   <td colSpan={5} className="helper-text">
                     Nenhuma turma cadastrada ainda.
@@ -252,6 +281,80 @@ export default function Turmas() {
           </table>
         </div>
       )}
+
+      <Modal open={Boolean(turmaInativando)} title="Inativar turma" onClose={() => setTurmaInativando(null)}>
+        {turmaInativando && (
+          <>
+            <p className="helper-text">
+              A turma <b>{turmaInativando.nome}</b> ainda tem <b>{contarAlunosAtivos(turmaInativando.id)}</b> aluno(s) ativo(s).
+              Escolha a turma da mesma categoria que vai recebê-los. Contratos e histórico são mantidos.
+            </p>
+            {destinosPossiveis(turmaInativando).length === 0 ? (
+              <p className="helper-text" style={{ color: "var(--amber-ink)" }}>
+                Não há outra turma ativa nesta categoria. Crie uma antes de inativar esta.
+              </p>
+            ) : (
+              <Select
+                id="turmaDestinoId"
+                label="Transferir alunos para"
+                options={destinosPossiveis(turmaInativando).map((t) => ({
+                  value: t.id,
+                  label: `${t.nome} — ${t.diasLegiveis} ${t.horario}`,
+                }))}
+                value={turmaDestinoId}
+                onChange={(e) => setTurmaDestinoId(e.target.value)}
+              />
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
+              <Button type="button" variant="outline" onClick={() => setTurmaInativando(null)}>
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                disabled={inativando || !turmaDestinoId}
+                onClick={() => executarInativacao(turmaInativando, turmaDestinoId)}
+              >
+                {inativando ? "Inativando..." : "Transferir e inativar"}
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal open={modalInativasAberto} title="Turmas inativas" onClose={() => setModalInativasAberto(false)}>
+        {turmasInativas.length === 0 ? (
+          <p className="helper-text">Nenhuma turma inativa.</p>
+        ) : (
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Turma</th>
+                  <th>Horário</th>
+                  <th>Categoria</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {turmasInativas.map((turma) => (
+                  <tr key={turma.id}>
+                    <td>{turma.nome}</td>
+                    <td className="mono">
+                      {turma.diasLegiveis} {turma.horario}
+                    </td>
+                    <td>{nomeCategoria(turma.categoriaId)}</td>
+                    <td>
+                      <Button size="sm" onClick={() => handleReativar(turma)} disabled={reativandoId === turma.id}>
+                        {reativandoId === turma.id ? "Reativando..." : "Reativar"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Modal>
 
       <Modal open={modalAberto} title={editandoId ? "Editar Turma" : "Nova Turma"} onClose={fecharModal}>
         <form onSubmit={handleSubmit}>
