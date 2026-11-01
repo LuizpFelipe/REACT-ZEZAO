@@ -5,7 +5,7 @@ import Modal from "@shared/components/Modal/Modal";
 import Select from "@shared/components/Select/Select";
 import Input from "@shared/components/Input/Input";
 import Button from "@shared/components/Button/Button";
-import { listarAlunos, atualizarDadosDoAluno, atualizarPosicaoDoAluno } from "../services/alunoService";
+import { listarAlunos, atualizarDadosDoAluno, atualizarPosicaoDoAluno, inativarAluno } from "../services/alunoService";
 import { POSICOES } from "../models/Posicao";
 import { formatarCpf, validarCpfDoResponsavel } from "@shared/utils/cpf";
 import { formatarTelefone, validarTelefone } from "@shared/utils/telefone";
@@ -205,6 +205,21 @@ export default function Alunos() {
     }
   }
 
+  async function handleInativarAluno(aluno) {
+    const confirmado = window.confirm(
+      `Inativar ${aluno.nome}? O aluno deixa de aparecer como ativo, mas o histórico e os contratos continuam salvos.`
+    );
+    if (!confirmado) return;
+    setMensagem(null);
+    try {
+      await inativarAluno(aluno.id);
+      setAlunos(await listarAlunos());
+      setMensagem({ tipo: "sucesso", texto: `${aluno.nome} foi inativado.` });
+    } catch (err) {
+      setMensagem({ tipo: "erro", texto: err.message || "Não foi possível inativar o aluno." });
+    }
+  }
+
   async function confirmarRemanejamento(event) {
     event.preventDefault();
     setErroModal("");
@@ -347,6 +362,11 @@ export default function Alunos() {
                       <Button variant="outline" size="sm" onClick={() => abrirEdicaoDoAluno(aluno)}>
                         Editar
                       </Button>
+                      {aluno.status !== "Inativo" && (
+                        <Button variant="outline" size="sm" onClick={() => handleInativarAluno(aluno)}>
+                          Inativar
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
