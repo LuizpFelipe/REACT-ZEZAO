@@ -12,6 +12,20 @@ function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Em aberto primeiro (atrasadas antes das pendentes), pagas por último; dentro do grupo, vencimento mais antigo primeiro.
+function ordenarParcelas(parcelas) {
+  const prioridade = { Atrasado: 0, Pendente: 1, Pago: 2 };
+  return [...parcelas].sort((a, b) => {
+    const diferenca = (prioridade[a.status] ?? 1) - (prioridade[b.status] ?? 1);
+    if (diferenca !== 0) return diferenca;
+    const vencimentoA = String(a.vencimento ?? a.dataVencimento ?? "");
+    const vencimentoB = String(b.vencimento ?? b.dataVencimento ?? "");
+    return a.status === "Pago" ? vencimentoB.localeCompare(vencimentoA) : vencimentoA.localeCompare(vencimentoB);
+  });
+}
+
+const LINHAS_POR_PAGINA = 100;
+
 const RESUMO_VAZIO = { recebidoMes: "—", pendente: "—", inadimplencia: "—" };
 
 const OPCOES_STATUS = [
@@ -28,8 +42,13 @@ export default function Financeiro() {
   const [carregando, setCarregando] = useState(true);
   const [disparando, setDisparando] = useState(false);
   const [processandoId, setProcessandoId] = useState(null);
+  const [limiteDeLinhas, setLimiteDeLinhas] = useState(LINHAS_POR_PAGINA);
   useEffect(() => {
     carregar();
+  }, [statusFiltro]);
+
+  useEffect(() => {
+    setLimiteDeLinhas(LINHAS_POR_PAGINA);
   }, [statusFiltro]);
 
   async function carregar() {
@@ -39,7 +58,7 @@ export default function Financeiro() {
         listarParcelas(statusFiltro ? { status: statusFiltro } : {}),
         listarResumoFinanceiro(),
       ]);
-      setParcelas(parcelasApi);
+      setParcelas(ordenarParcelas(parcelasApi));
       setResumo(resumoApi ?? RESUMO_VAZIO);
     } catch {
       setParcelas([]);
@@ -116,7 +135,7 @@ export default function Financeiro() {
             <table className="data-table">
               <thead><tr><th>Aluno</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
               <tbody>
-                {parcelas.map((p) => (
+                {parcelas.slice(0, limiteDeLinhas).map((p) => (
                   <tr key={p.id}>
                     <td>{p.status === "Atrasado" ? (<span className="name-flag"><span className="flag-dot" />{p.aluno}</span>) : p.aluno}</td>
                     <td className="mono">{converterDataIsoParaBr(p.vencimento)}</td>
@@ -150,6 +169,14 @@ export default function Financeiro() {
                 ))}
               </tbody>
             </table>
+            {parcelas.length > limiteDeLinhas && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 12, alignItems: "center", marginTop: 12 }}>
+                <span className="helper-text">Mostrando {limiteDeLinhas} de {parcelas.length}</span>
+                <Button variant="outline" size="sm" onClick={() => setLimiteDeLinhas((atual) => atual + LINHAS_POR_PAGINA)}>
+                  Mostrar mais
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

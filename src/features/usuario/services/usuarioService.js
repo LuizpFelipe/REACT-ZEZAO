@@ -2,15 +2,6 @@ import { fetchApi } from "@shared/utils/http";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5260/api";
 
-export async function listarUsuarios() {
-  const response = await fetchApi(`${API_URL}/usuarios`);
-  if (!response.ok) {
-    throw new Error("Não foi possível carregar os usuários.");
-  }
-  const corpo = await response.json();
-  return corpo?.data ?? corpo ?? [];
-}
-
 export async function resetarSenha(usuarioId, novaSenha) {
   const response = await fetchApi(`${API_URL}/usuarios/${usuarioId}/resetar-senha`, {
     method: "PUT",

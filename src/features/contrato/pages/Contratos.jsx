@@ -5,7 +5,14 @@ import Loading from "@shared/components/Loading/Loading";
 import Select from "@shared/components/Select/Select";
 import { listarAlunos } from "@features/aluno/services/alunoService";
 import { baixarContratoPdf, cancelarContrato, listarContratos } from "../services/contratoService";
+import { converterDataIsoParaBr } from "@shared/utils/data";
 import "@shared/shared.css";
+
+function formatarMoeda(valor) {
+  const numero = Number(valor);
+  if (valor === null || valor === undefined || Number.isNaN(numero)) return "—";
+  return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 const OPCOES_STATUS = [
   { value: "", label: "Todos os contratos" },
@@ -131,9 +138,9 @@ export default function Contratos() {
               {contratosFiltrados.map((c) => (
                 <tr key={c.id}>
                   <td>{nomeDoAluno(c)}</td>
-                  <td className="mono">{c.dataInicio}</td>
-                  <td className="mono">{c.dataFim}</td>
-                  <td className="mono">{c.valorParcela}</td>
+                  <td className="mono">{converterDataIsoParaBr(c.dataInicio) || "—"}</td>
+                  <td className="mono">{converterDataIsoParaBr(c.dataFim) || "—"}</td>
+                  <td className="mono">{formatarMoeda(c.valorParcela)}</td>
                   <td className="mono">{c.numParcelas}</td>
                   <td><StatusBadge status={c.status} /></td>
                   <td>

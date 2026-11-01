@@ -6,7 +6,7 @@ import Input from "@shared/components/Input/Input";
 import Select from "@shared/components/Select/Select";
 import Button from "@shared/components/Button/Button";
 import { listarCategorias } from "@features/categoria/services/categoriaService";
-import { listarCampeonatos, criarCampeonato } from "../services/campeonatoService";
+import { listarCampeonatos, criarCampeonato, atualizarCampeonato, removerCampeonato } from "../services/campeonatoService";
 import { estadoCampeonato } from "../models/Campeonato";
 import "@shared/shared.css";
 
@@ -24,6 +24,8 @@ export default function Campeonatos() {
   const [form, setForm] = useState(FORM_INICIAL);
   const [enviando, setEnviando] = useState(false);
   const [erroModal, setErroModal] = useState("");
+  const [campeonatoEditandoId, setCampeonatoEditandoId] = useState(null);
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     carregar();
@@ -53,7 +55,30 @@ export default function Campeonatos() {
     return categorias.find((c) => c.id === id)?.nome ?? "—";
   }
 
+  function abrirEdicao(campeonato) {
+    setCampeonatoEditandoId(campeonato.id);
+    setForm({ nome: campeonato.nome, categoriaId: campeonato.categoriaId, data: (campeonato.data ?? "").split("T")[0] });
+    setErroModal("");
+    setModalAberto(true);
+  }
+
+  async function handleExcluir(campeonato) {
+    const confirmado = window.confirm(
+      `Excluir o campeonato "${campeonato.nome}"? Inscrições, times, jogos e estatísticas dele também serão apagados.`
+    );
+    if (!confirmado) return;
+    setFeedback(null);
+    try {
+      await removerCampeonato(campeonato.id);
+      setFeedback({ tipo: "ok", texto: "Campeonato excluído." });
+      carregar();
+    } catch (err) {
+      setFeedback({ tipo: "erro", texto: err.message || "Não foi possível excluir o campeonato." });
+    }
+  }
+
   function abrirNovo() {
+    setCampeonatoEditandoId(null);
     setForm({ ...FORM_INICIAL, categoriaId: categorias[0]?.id ?? "" });
     setErroModal("");
     setModalAberto(true);
@@ -70,11 +95,16 @@ export default function Campeonatos() {
 
     setEnviando(true);
     try {
-      await criarCampeonato(form);
+      if (campeonatoEditandoId) {
+        await atualizarCampeonato(campeonatoEditandoId, form);
+        setFeedback({ tipo: "ok", texto: "Campeonato atualizado." });
+      } else {
+        await criarCampeonato(form);
+      }
       setModalAberto(false);
       carregar();
     } catch (err) {
-      setErroModal(err.message || "Não foi possível criar o campeonato.");
+      setErroModal(err.message || "Não foi possível salvar o campeonato.");
     } finally {
       setEnviando(false);
     }
@@ -96,6 +126,12 @@ export default function Campeonatos() {
       {erro && (
         <p className="helper-text" style={{ color: "var(--red-ink)" }}>
           {erro}
+        </p>
+      )}
+
+      {feedback && (
+        <p className="helper-text" role={feedback.tipo === "erro" ? "alert" : "status"} style={{ color: feedback.tipo === "erro" ? "var(--red-ink)" : "var(--green-ink)" }}>
+          {feedback.texto}
         </p>
       )}
 
@@ -129,6 +165,12 @@ export default function Campeonatos() {
                   <Button variant="outline" size="sm" onClick={() => navigate(camp.id)}>
                     Ver
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => abrirEdicao(camp)}>
+                    Editar
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleExcluir(camp)}>
+                    Excluir
+                  </Button>
                 </div>
               </div>
             );
@@ -136,7 +178,7 @@ export default function Campeonatos() {
         )}
       </div>
 
-      <Modal open={modalAberto} title="Novo Campeonato" onClose={() => setModalAberto(false)}>
+      <Modal open={modalAberto} title={campeonatoEditandoId ? "Editar Campeonato" : "Novo Campeonato"} onClose={() => setModalAberto(false)}>
         <form onSubmit={handleSubmit}>
           <div className="form-row full">
             <Input

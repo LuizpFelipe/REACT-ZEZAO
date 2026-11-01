@@ -558,3 +558,14 @@ table.data-table {
   bottom: 0;
   background: var(--accent);
 }
+
+/* Celular: a coluna de ação (última) fica fixa à direita para o botão nunca sumir na rolagem horizontal. */
+@media (max-width: 560px) {
+  .table-scroll .data-table th:last-child,
+  .table-scroll .data-table td:last-child {
+    position: sticky;
+    right: 0;
+    background: var(--panel);
+    box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.25);
+  }
+}

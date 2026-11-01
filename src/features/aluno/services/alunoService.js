@@ -43,6 +43,14 @@ export async function criarAluno(dados) {
   return corpo.data;
 }
 
+export async function inativarAluno(alunoId) {
+  const response = await fetchApi(`${API_URL}/Alunos/${alunoId}`, { method: "DELETE" });
+  const corpo = await response.json().catch(() => null);
+  if (!response.ok || corpo?.status === false) {
+    throw new Error(corpo?.message || "Não foi possível inativar o aluno.");
+  }
+}
+
 export async function atualizarCpfDoResponsavel(aluno, responsavelCpf) {
   return atualizarAluno(aluno, { responsavelCpf });
 }

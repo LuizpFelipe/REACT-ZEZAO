@@ -37,6 +37,26 @@ export async function criarCampeonato({ nome, categoriaId, data }) {
   return criarCampeonatoFromApi(corpo.data);
 }
 
+export async function atualizarCampeonato(campeonatoId, { nome, categoriaId, data }) {
+  const response = await fetchApi(`${API_URL}/Campeonatos/${campeonatoId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome, categoriaId, data }),
+  });
+  const corpo = await response.json().catch(() => null);
+  if (!response.ok || corpo?.status === false) {
+    throw new Error(corpo?.message || "Não foi possível atualizar o campeonato.");
+  }
+}
+
+export async function removerCampeonato(campeonatoId) {
+  const response = await fetchApi(`${API_URL}/Campeonatos/${campeonatoId}`, { method: "DELETE" });
+  const corpo = await response.json().catch(() => null);
+  if (!response.ok || corpo?.status === false) {
+    throw new Error(corpo?.message || "Não foi possível excluir o campeonato.");
+  }
+}
+
 export async function listarParticipacoes(campeonatoId) {
   const response = await fetchApi(`${API_URL}/Campeonatos/${campeonatoId}/participacoes`);
   if (!response.ok) {

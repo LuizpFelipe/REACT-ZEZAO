@@ -11,6 +11,11 @@ import { listarResumoFinanceiro } from "@features/financeiro/services/financeiro
 import { estadoCampeonato } from "@features/campeonato/models/Campeonato";
 import "@shared/shared.css";
 
+function formatarMoeda(valor) {
+  if (typeof valor !== "number") return valor ?? "—";
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export default function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [dados, setDados] = useState({
@@ -112,8 +117,8 @@ export default function Dashboard() {
       <div className="stats-row">
         <Stat label="Contratos ativos" valor={contratosAtivos} to="/coordenacao/contratos" />
         <Stat label="Campeonatos agendados" valor={campeonatosAgendados} to="/campeonato" />
-        <Stat label="Recebido no mês" valor={resumoFinanceiro?.recebidoMes} to="/coordenacao/financeiro" />
-        <Stat label="Pendente" valor={resumoFinanceiro?.pendente} to="/coordenacao/financeiro" />
+        <Stat label="Recebido no mês" valor={formatarMoeda(resumoFinanceiro?.recebidoMes)} to="/coordenacao/financeiro" />
+        <Stat label="Pendente" valor={formatarMoeda(resumoFinanceiro?.pendente)} to="/coordenacao/financeiro" />
       </div>
 
       <div className="card">
