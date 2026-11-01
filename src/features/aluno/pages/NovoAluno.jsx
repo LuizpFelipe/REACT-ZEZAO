@@ -352,7 +352,7 @@ export default function NovoAluno() {
           <ul className="tag-list">
             {categorias.map((cat) => (
               <li key={cat.id}>
-                {cat.nome} <span className="tag">{cat.idadeMin}–{cat.idadeMax} anos</span>
+                {cat.nome} <span className="tag">{cat.idadeMin === cat.idadeMax ? `${cat.idadeMin} anos` : `${cat.idadeMin}–${cat.idadeMax} anos`}</span>
               </li>
             ))}
             {categorias.length === 0 && <li>Nenhuma categoria cadastrada ainda.</li>}
