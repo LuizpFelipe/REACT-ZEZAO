@@ -9,7 +9,9 @@ export async function listarCategorias() {
     throw new Error("Não foi possível carregar as categorias.");
   }
   const dados = await response.json();
-  return dados.map(criarCategoriaFromApi);
+  return dados
+    .map(criarCategoriaFromApi)
+    .sort((primeira, segunda) => primeira.idadeMin - segunda.idadeMin || primeira.idadeMax - segunda.idadeMax);
 }
 
 export async function criarCategoria({ nome, idadeMin, idadeMax }) {
